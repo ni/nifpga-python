@@ -40,4 +40,5 @@ Example usage of FPGA configuration functions:
       data = my_control.read()
 
 
+See our [readthedocs page](http://nifpga-python.readthedocs.io/en/latest/) for more detailed examples and documentation.
 
