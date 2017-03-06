@@ -1,7 +1,7 @@
 ===========  =================================================================================================================================
 Info         Python API for interacting with LabVIEW FPGA Devices. See our `GitHub <https://github.com/ni/nifpga-python/>`_.
 Author       National Instruments
-Maintainers  Micheal Strain <Micheal.Strain@ni.com>, Mose Gumble <mose.gumble@ni.com>
+Maintainers  Michael Strain <Michael.Strain@ni.com>, Mose Gumble <mose.gumble@ni.com>
 ===========  =================================================================================================================================
 
 About
