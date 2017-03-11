@@ -174,8 +174,10 @@ class Status(BaseException):
         if isinstance(arg, str):
             return "'%s'" % arg
 
-        try: return hex(arg)
-        except TypeError: return str(arg)
+        try:
+            return hex(arg)
+        except TypeError:
+            return str(arg)
 
     def __str__(self):
         """
@@ -247,6 +249,7 @@ class UnknownError(ErrorStatus):
                                            function_name=function_name,
                                            argument_names=argument_names,
                                            function_args=function_args)
+
 
 # Define error codes and their names.
 # Each code in this list will be codegened into two classes, e.g.:
@@ -322,6 +325,7 @@ for code, code_string in error_codes:
     # will all reference the same value.
     def add_classes(code, code_string):
         classname = code_string + 'Error'
+
         def __init__(self, function_name, argument_names, function_args):
             ErrorStatus.__init__(self,
                                  code=code,
@@ -330,13 +334,13 @@ for code, code_string in error_codes:
                                  argument_names=argument_names,
                                  function_args=function_args)
         error_class = type(classname, (ErrorStatus,),
-                                        {'__init__': __init__,
-                                         'CODE': code})
+                           {'__init__': __init__, 'CODE': code})
         codes_to_exception_classes[code] = error_class
         # copy the exception type into module globals
         _g[error_class.__name__] = error_class
 
         classname = code_string + 'Warning'
+
         def __init__(self, function_name, argument_names, function_args):
             WarningStatus.__init__(self,
                                    code=-code,
@@ -345,8 +349,7 @@ for code, code_string in error_codes:
                                    argument_names=argument_names,
                                    function_args=function_args)
         warning_class = type(classname, (WarningStatus,),
-                                           {'__init__': __init__,
-                                            'CODE': -code})
+                             {'__init__': __init__, 'CODE': -code})
         codes_to_exception_classes[-code] = warning_class
         # copy the warning type into module globals
         _g[warning_class.__name__] = warning_class

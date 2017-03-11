@@ -72,13 +72,11 @@ class _NiFpga(StatusCheckedLibrary):
     """
 
     def __init__(self):
-        library_function_infos = \
-        [
+        library_function_infos = [
             LibraryFunctionInfo(
                 pretty_name="Open",
                 name_in_library="NiFpgaDll_Open",
-                named_argtypes=\
-                [
+                named_argtypes=[
                     NamedArgtype("bitfile path", ctypes.c_char_p),
                     NamedArgtype("signature", ctypes.c_char_p),
                     NamedArgtype("resource", ctypes.c_char_p),
@@ -88,24 +86,21 @@ class _NiFpga(StatusCheckedLibrary):
             LibraryFunctionInfo(
                 pretty_name="Run",
                 name_in_library="NiFpgaDll_Run",
-                named_argtypes=\
-                [
+                named_argtypes=[
                     NamedArgtype("session", _SessionType),
                     NamedArgtype("attribute", ctypes.c_uint32),
                 ]),
             LibraryFunctionInfo(
                 pretty_name="Close",
                 name_in_library="NiFpgaDll_Close",
-                named_argtypes=\
-                [
+                named_argtypes=[
                     NamedArgtype("session", _SessionType),
                     NamedArgtype("attribute", ctypes.c_uint32),
                 ]),
             LibraryFunctionInfo(
                 pretty_name="OpenResource",
                 name_in_library="NiFpgaDll_OpenResource",
-                named_argtypes=\
-                [
+                named_argtypes=[
                     NamedArgtype("parentSession", _SessionType),
                     NamedArgtype("parentIndex", ctypes.c_uint32),
                     NamedArgtype("globalIndex", ctypes.c_uint32),
@@ -114,8 +109,7 @@ class _NiFpga(StatusCheckedLibrary):
             LibraryFunctionInfo(
                 pretty_name="AddResources",
                 name_in_library="NiFpgaDll_AddResources",
-                named_argtypes=\
-                [
+                named_argtypes=[
                     NamedArgtype("session", _SessionType),
                     NamedArgtype("resourceNames", ctypes.POINTER(ctypes.c_char_p)),
                     NamedArgtype("resourceValues", ctypes.POINTER(ctypes.c_uint32)),
@@ -125,68 +119,59 @@ class _NiFpga(StatusCheckedLibrary):
             LibraryFunctionInfo(
                 pretty_name="GetResourceIndex",
                 name_in_library="NiFpgaDll_GetResourceIndex",
-                named_argtypes=\
-                [
+                named_argtypes=[
                     NamedArgtype("resourceName", ctypes.c_char_p),
                     NamedArgtype("resourceIndex", ctypes.POINTER(ctypes.c_uint32)),
                 ]),
             LibraryFunctionInfo(
                 pretty_name="ReleaseResourceIndex",
                 name_in_library="NiFpgaDll_ReleaseResourceIndex",
-                named_argtypes=\
-                [
+                named_argtypes=[
                     NamedArgtype("resourceName", ctypes.c_char_p),
                 ]),
             LibraryFunctionInfo(
                 pretty_name="GetResourceName",
                 name_in_library="NiFpgaDll_GetResourceName",
-                named_argtypes=\
-                [
+                named_argtypes=[
                     NamedArgtype("resourceIndex", ctypes.c_uint32),
                     NamedArgtype("resourceName", ctypes.POINTER(ctypes.c_char_p)),
                 ]),
             LibraryFunctionInfo(
                 pretty_name="Reset",
                 name_in_library="NiFpgaDll_Reset",
-                named_argtypes=\
-                [
+                named_argtypes=[
                     NamedArgtype("session", _SessionType),
                 ]),
             LibraryFunctionInfo(
                 pretty_name="Abort",
                 name_in_library="NiFpgaDll_Abort",
-                named_argtypes=\
-                [
+                named_argtypes=[
                     NamedArgtype("session", _SessionType),
                 ]),
             LibraryFunctionInfo(
                 pretty_name="Download",
                 name_in_library="NiFpgaDll_Download",
-                named_argtypes=\
-                [
+                named_argtypes=[
                     NamedArgtype("session", _SessionType),
                 ]),
             LibraryFunctionInfo(
                 pretty_name="ReserveIrqContext",
                 name_in_library="NiFpgaDll_ReserveIrqContext",
-                named_argtypes=\
-                [
+                named_argtypes=[
                     NamedArgtype("session", _SessionType),
                     NamedArgtype("context", ctypes.POINTER(_IrqContextType)),
                 ]),
             LibraryFunctionInfo(
                 pretty_name="UnreserveIrqContext",
                 name_in_library="NiFpgaDll_UnreserveIrqContext",
-                named_argtypes=\
-                [
+                named_argtypes=[
                     NamedArgtype("session", _SessionType),
                     NamedArgtype("context", ctypes.POINTER(_IrqContextType)),
                 ]),
             LibraryFunctionInfo(
                 pretty_name="WaitOnIrqs",
                 name_in_library="NiFpgaDll_WaitOnIrqs",
-                named_argtypes=\
-                [
+                named_argtypes=[
                     NamedArgtype("session", _SessionType),
                     NamedArgtype("context", ctypes.POINTER(_IrqContextType)),
                     NamedArgtype("irqs", ctypes.c_uint32),
@@ -197,16 +182,14 @@ class _NiFpga(StatusCheckedLibrary):
             LibraryFunctionInfo(
                 pretty_name="AcknowledgeIrqs",
                 name_in_library="NiFpgaDll_AcknowledgeIrqs",
-                named_argtypes=\
-                [
+                named_argtypes=[
                     NamedArgtype("session", _SessionType),
                     NamedArgtype("irqs", ctypes.c_uint32),
                 ]),
             LibraryFunctionInfo(
                 pretty_name="ConfigureFifo",
                 name_in_library="NiFpgaDll_ConfigureFifo",
-                named_argtypes=\
-                [
+                named_argtypes=[
                     NamedArgtype("session", _SessionType),
                     NamedArgtype("fifo", ctypes.c_uint32),
                     NamedArgtype("depth", ctypes.c_size_t),
@@ -214,8 +197,7 @@ class _NiFpga(StatusCheckedLibrary):
             LibraryFunctionInfo(
                 pretty_name="ConfigureFifo2",
                 name_in_library="NiFpgaDll_ConfigureFifo2",
-                named_argtypes=\
-                [
+                named_argtypes=[
                     NamedArgtype("session", _SessionType),
                     NamedArgtype("fifo", ctypes.c_uint32),
                     NamedArgtype("requested depth", ctypes.c_size_t),
@@ -224,24 +206,21 @@ class _NiFpga(StatusCheckedLibrary):
             LibraryFunctionInfo(
                 pretty_name="StartFifo",
                 name_in_library="NiFpgaDll_StartFifo",
-                named_argtypes=\
-                [
+                named_argtypes=[
                     NamedArgtype("session", _SessionType),
                     NamedArgtype("fifo", ctypes.c_uint32),
                 ]),
             LibraryFunctionInfo(
                 pretty_name="StopFifo",
                 name_in_library="NiFpgaDll_StopFifo",
-                named_argtypes=\
-                [
+                named_argtypes=[
                     NamedArgtype("session", _SessionType),
                     NamedArgtype("fifo", ctypes.c_uint32),
                 ]),
             LibraryFunctionInfo(
                 pretty_name="ReleaseFifoElements",
                 name_in_library="NiFpgaDll_ReleaseFifoElements",
-                named_argtypes=\
-                [
+                named_argtypes=[
                     NamedArgtype("session", _SessionType),
                     NamedArgtype("fifo", ctypes.c_uint32),
                     NamedArgtype("elements", ctypes.c_size_t),
@@ -249,23 +228,20 @@ class _NiFpga(StatusCheckedLibrary):
             LibraryFunctionInfo(
                 pretty_name="GetPeerToPeerFifoEndpoint",
                 name_in_library="NiFpgaDll_GetPeerToPeerFifoEndpoint",
-                named_argtypes=\
-                [
+                named_argtypes=[
                     NamedArgtype("session", _SessionType),
                     NamedArgtype("fifo", ctypes.c_uint32),
                     NamedArgtype("endpoint", ctypes.POINTER(ctypes.c_uint32)),
                 ])
-        ] # list of function_infos
+        ]  # list of function_infos
 
         for datatype in DataType:
             type_ctype = datatype._return_ctype()
-            library_function_infos.extend( \
-            [
+            library_function_infos.extend([
                 LibraryFunctionInfo(
                     pretty_name="Read%s" % datatype,
                     name_in_library="NiFpgaDll_Read%s" % datatype,
-                    named_argtypes=\
-                    [
+                    named_argtypes=[
                         NamedArgtype("session", _SessionType),
                         NamedArgtype("indicator", ctypes.c_uint32),
                         NamedArgtype("value", ctypes.POINTER(type_ctype)),
@@ -273,8 +249,7 @@ class _NiFpga(StatusCheckedLibrary):
                 LibraryFunctionInfo(
                     pretty_name="Write%s" % datatype,
                     name_in_library="NiFpgaDll_Write%s" % datatype,
-                    named_argtypes=\
-                    [
+                    named_argtypes=[
                         NamedArgtype("session", _SessionType),
                         NamedArgtype("control", ctypes.c_uint32),
                         NamedArgtype("value", type_ctype),
@@ -282,8 +257,7 @@ class _NiFpga(StatusCheckedLibrary):
                 LibraryFunctionInfo(
                     pretty_name="ReadArray%s" % datatype,
                     name_in_library="NiFpgaDll_ReadArray%s" % datatype,
-                    named_argtypes=\
-                    [
+                    named_argtypes=[
                         NamedArgtype("session", _SessionType),
                         NamedArgtype("indicator", ctypes.c_uint32),
                         NamedArgtype("array", ctypes.POINTER(type_ctype)),
@@ -292,8 +266,7 @@ class _NiFpga(StatusCheckedLibrary):
                 LibraryFunctionInfo(
                     pretty_name="WriteArray%s" % datatype,
                     name_in_library="NiFpgaDll_WriteArray%s" % datatype,
-                    named_argtypes=\
-                    [
+                    named_argtypes=[
                         NamedArgtype("session", _SessionType),
                         NamedArgtype("control", ctypes.c_uint32),
                         NamedArgtype("array", ctypes.POINTER(type_ctype)),
@@ -302,8 +275,7 @@ class _NiFpga(StatusCheckedLibrary):
                 LibraryFunctionInfo(
                     pretty_name="ReadFifo%s" % datatype,
                     name_in_library="NiFpgaDll_ReadFifo%s" % datatype,
-                    named_argtypes=\
-                    [
+                    named_argtypes=[
                         NamedArgtype("session", _SessionType),
                         NamedArgtype("fifo", ctypes.c_uint32),
                         NamedArgtype("data", ctypes.POINTER(type_ctype)),
@@ -314,8 +286,7 @@ class _NiFpga(StatusCheckedLibrary):
                 LibraryFunctionInfo(
                     pretty_name="WriteFifo%s" % datatype,
                     name_in_library="NiFpgaDll_WriteFifo%s" % datatype,
-                    named_argtypes=\
-                    [
+                    named_argtypes=[
                         NamedArgtype("session", _SessionType),
                         NamedArgtype("fifo", ctypes.c_uint32),
                         NamedArgtype("data", ctypes.POINTER(type_ctype)),
@@ -326,8 +297,7 @@ class _NiFpga(StatusCheckedLibrary):
                 LibraryFunctionInfo(
                     pretty_name="AcquireFifoReadElements%s" % datatype,
                     name_in_library="NiFpgaDll_AcquireFifoReadElements%s" % datatype,
-                    named_argtypes=\
-                    [
+                    named_argtypes=[
                         NamedArgtype("session", _SessionType),
                         NamedArgtype("fifo", ctypes.c_uint32),
                         NamedArgtype("elements", ctypes.POINTER(ctypes.POINTER(type_ctype))),
@@ -339,8 +309,7 @@ class _NiFpga(StatusCheckedLibrary):
                 LibraryFunctionInfo(
                     pretty_name="AcquireFifoWriteElements%s" % datatype,
                     name_in_library="NiFpgaDll_AcquireFifoWriteElements%s" % datatype,
-                    named_argtypes=\
-                    [
+                    named_argtypes=[
                         NamedArgtype("session", _SessionType),
                         NamedArgtype("fifo", ctypes.c_uint32),
                         NamedArgtype("elements", ctypes.POINTER(ctypes.POINTER(type_ctype))),
@@ -349,8 +318,7 @@ class _NiFpga(StatusCheckedLibrary):
                         NamedArgtype("elements acquired", ctypes.POINTER(ctypes.c_size_t)),
                         NamedArgtype("elements remaining", ctypes.POINTER(ctypes.c_size_t)),
                     ]),
-                ] # end of list of LibraryFunctionInfo's
-            ) # end of library_function_infos.extend() call
+            ])  # end of library_function_infos.extend() call
         try:
             super(_NiFpga, self).__init__(library_name="NiFpga",
                                           library_function_infos=library_function_infos)

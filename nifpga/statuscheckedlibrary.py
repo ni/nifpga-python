@@ -136,7 +136,8 @@ class LibraryFunctionInfo(object):
         self.named_argtypes = named_argtypes
 
 
-class LibraryNotFoundError(RuntimeError): pass
+class LibraryNotFoundError(RuntimeError):
+    pass
 
 
 class StatusCheckedLibrary(StatusCheckedFunctions):
