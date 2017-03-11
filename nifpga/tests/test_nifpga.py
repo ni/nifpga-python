@@ -4,8 +4,8 @@ import unittest
 import sys
 import warnings
 from contextlib import contextmanager
+from nose import SkipTest
 
-import jobrunner
 import nifpga
 from nifpga.statuscheckedlibrary import (check_status,
                                          FunctionInfo,
@@ -81,6 +81,10 @@ class NiFpgaStatusExceptionTest(unittest.TestCase):
                 self.assertIn("a bogus string argument: b'I am a string'", exception_str)
 
     def test_status_exceptions_can_be_pickled_across_processes(self):
+        try:
+            import jobrunner
+        except ImportError:
+            raise SkipTest("jobrunner not installed, skipping")
         runner = jobrunner.JobRunner(jobrunner.JobRunner.RUN_MODE_MULTIPROCESS,
                                         runnables=[raise_an_exception],
                                         auto_assert=False)
