@@ -52,7 +52,7 @@ class NiFpgaStatusExceptionTest(unittest.TestCase):
     def test_can_get_arguments_from_exception(self):
         try:
             raise_an_exception()
-            fail("An exception should have been raised")
+            self.fail("An exception should have been raised")
         except nifpga.FifoTimeoutError as e:
             self.assertEqual(-50400, e.get_code())
             self.assertEqual("FifoTimeout", e.get_code_string())
