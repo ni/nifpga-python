@@ -8,8 +8,6 @@ from nose import SkipTest
 
 import nifpga
 from nifpga.statuscheckedlibrary import (check_status,
-                                         FunctionInfo,
-                                         StatusCheckedFunctions,
                                          NamedArgtype,
                                          LibraryFunctionInfo,
                                          LibraryNotFoundError,
