@@ -142,50 +142,44 @@ class StatusCheckedLibraryTestCRunTime(unittest.TestCase):
     Since we can't load NiFpga on a dev machine unless we have all its
     dependencies installed (i.e. a bunch of NI software we don't want on
     a dev machine), we'll cheat and use the C runtime library and
-    strcmp. strcmp doesn't really return a NiFpga_Status, but we can pretend.
+    atoi. atoi doesn't really return a NiFpga_Status, but we can pretend.
     """
     def setUp(self):
         self._c_runtime = StatusCheckedLibrary(
             "c",
             library_function_infos=[
                 LibraryFunctionInfo(
-                    pretty_name="c_strcmp",
-                    name_in_library="strcmp",
+                    pretty_name="c_atoi",
+                    name_in_library="atoi",
                     named_argtypes=[
-                        NamedArgtype("string1", ctypes.c_char_p),
-                        NamedArgtype("string2", ctypes.c_char_p),
+                        NamedArgtype("nptr", ctypes.c_char_p),
                     ])
             ])
 
     def test_success(self):
-        self._c_runtime.c_strcmp(b"equal", b"equal")
-        self._c_runtime["c_strcmp"](b"equal", b"equal")
+        self._c_runtime.c_atoi(b"0")
+        self._c_runtime["c_atoi"](b"0")
 
     def test_get_unknown_error(self):
-        # strcmp returns -1
         with self.assertRaises(nifpga.UnknownError):
-            self._c_runtime.c_strcmp(b"not equal", b"these are")
+            self._c_runtime.c_atoi(b"-1")
 
     def test_get_unknown_warning(self):
         with warnings.catch_warnings(record=True) as w:
-            # strcmp returns 1
-            self._c_runtime.c_strcmp(b"these are", b"not equal")
+            self._c_runtime.c_atoi(b"1")
 
             assert len(w) == 1
             warning = w[0].message
             # Make sure all this propagates into the warning.
             self.assertEqual(1, warning.get_code())
-            self.assertEqual(b"these are", warning.get_args()["string1"])
-            self.assertEqual(b"not equal", warning.get_args()["string2"])
+            self.assertEqual(b"1", warning.get_args()["nptr"])
 
             # These make the warning message readable
-            self.assertIn("strcmp", str(warning))
+            self.assertIn("atoi", str(warning))
             if python_version == 2:
-                self.assertIn("string1: 'these are'", str(warning))
-                self.assertIn("string2: 'not equal'", str(warning))
+                self.assertIn("nptr: '1'", str(warning))
             else:
-                self.assertIn("string1: b'these are'", str(warning))
-                self.assertIn("string2: b'not equal'", str(warning))
+                self.assertIn("nptr: b'1'", str(warning))
 
 
 class StatusCheckedLibraryTestMockedLibrary(unittest.TestCase):
