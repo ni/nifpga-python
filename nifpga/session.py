@@ -14,6 +14,7 @@ import ctypes
 from builtins import bytes
 from future.utils import iteritems
 
+
 class Session(object):
     """
     Session, a convenient wrapper around the low-level _NiFpga class.
@@ -281,9 +282,9 @@ class _Register(object):
         self._name = bitfile_register.name
         self._session = session
         self._write_func = nifpga["WriteArray%s" % self._datatype] if bitfile_register.is_array() \
-                                 else nifpga["Write%s" % self._datatype]
+            else nifpga["Write%s" % self._datatype]
         self._read_func = nifpga["ReadArray%s" % self._datatype] if bitfile_register.is_array() \
-                                else nifpga["Read%s" % self._datatype]
+            else nifpga["Read%s" % self._datatype]
         self._ctype_type = self._datatype._return_ctype()
         self._resource = bitfile_register.offset + base_address_on_device
         if bitfile_register.access_may_timeout():
@@ -366,12 +367,12 @@ class _ArrayRegister(_Register):
         """
         # if data is not iterable make it iterable
         try:
-            _ = iter(data)
+            iter(data)
         except TypeError:
             data = [data]
         assert len(data) == len(self), \
-                    "Bad data length %d for register '%s', expected %s" \
-                    % (len(data), self._name, len(self))
+            "Bad data length %d for register '%s', expected %s" \
+            % (len(data), self._name, len(self))
         buf = self._ctype_type(*data)
         self._write_func(self._session, self._resource, buf, len(self))
 
@@ -451,7 +452,7 @@ class _FIFO(object):
         """
         # if data is not iterable make it iterable
         try:
-            _ = iter(data)
+            iter(data)
         except TypeError:
             data = [data]
         buf_type = self._ctype_type * len(data)
