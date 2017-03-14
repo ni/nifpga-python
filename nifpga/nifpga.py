@@ -236,8 +236,7 @@ class _NiFpga(StatusCheckedLibrary):
             LibraryFunctionInfo(
                 pretty_name="ClientFunctionCall",
                 name_in_library="NiFpgaDll_ClientFunctionCall",
-                named_argtypes=
-                [
+                named_argtypes=[
                     NamedArgtype("session", _SessionType),
                     NamedArgtype("group", ctypes.c_uint32),
                     NamedArgtype("functionId", ctypes.c_uint32),
