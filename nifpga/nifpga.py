@@ -232,6 +232,18 @@ class _NiFpga(StatusCheckedLibrary):
                     NamedArgtype("session", _SessionType),
                     NamedArgtype("fifo", ctypes.c_uint32),
                     NamedArgtype("endpoint", ctypes.POINTER(ctypes.c_uint32)),
+                ]),
+            LibraryFunctionInfo(
+                pretty_name="ClientFunctionCall",
+                name_in_library="NiFpgaDll_ClientFunctionCall",
+                named_argtypes=[
+                    NamedArgtype("session", _SessionType),
+                    NamedArgtype("group", ctypes.c_uint32),
+                    NamedArgtype("functionId", ctypes.c_uint32),
+                    NamedArgtype("inBuffer", ctypes.c_void_p),
+                    NamedArgtype("inBufferSize", ctypes.c_size_t),
+                    NamedArgtype("outBuffer", ctypes.c_void_p),
+                    NamedArgtype("outBufferSize", ctypes.c_size_t),
                 ])
         ]  # list of function_infos
 

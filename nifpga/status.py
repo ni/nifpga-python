@@ -313,6 +313,7 @@ error_codes = [
     (-63193, "FeatureNotSupported"),
     (-63194, "VersionMismatch"),
     (-63195, "InvalidSession"),
+    (-63196, "InvalidAttribute"),
     (-63198, "OutOfHandles"),
 ]
 
