@@ -8,7 +8,7 @@ from .nifpga import (_SessionType, _IrqContextType, _NiFpga, DataType,
                      OPEN_ATTRIBUTE_NO_RUN, RUN_ATTRIBUTE_WAIT_UNTIL_DONE,
                      CLOSE_ATTRIBUTE_NO_RESET_IF_LAST_SESSION)
 from .bitfile import Bitfile
-from .status import IrqTimeoutWarning, InvalidSessionError
+from .status import InvalidSessionError
 from collections import namedtuple
 import ctypes
 from builtins import bytes
@@ -213,10 +213,6 @@ class Session(object):
                                     timeout_ms,
                                     irqs_asserted_bitmask,
                                     timed_out)
-        except IrqTimeoutWarning:
-            # We pass timed_out to the C API, so we can ignore this warning
-            # and just always return timed_out.
-            pass
         finally:
             self._nifpga.UnreserveIrqContext(self._session, context)
         irqs_asserted = [i for i in range(32) if irqs_asserted_bitmask.value & (1 << i)]
