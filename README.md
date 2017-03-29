@@ -1,6 +1,8 @@
 FPGA Interface Python API
 =======
 
+[![Build Status](https://travis-ci.org/ni/nifpga-python.svg?branch=master)](https://travis-ci.org/ni/nifpga-python)
+
 Overview
 --------
 The National Instruments FPGA Interface Python API is used for communication between processor and FPGA within NI reconfigurable I/O (RIO) hardware such as NI CompactRIO, NI Single-Board RIO, NI FlexRIO, and NI R Series multifunction RIO.
