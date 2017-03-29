@@ -30,10 +30,7 @@ information on sessions view our Read the docs documentation
 Example usage of FPGA configuration functions:
 
     with Session(bitfile="BitfilePath.lvbitx", resource="RIO0") as session:
-       try:
-          session.run()
-       except FpgaAlreadyRunningWarning:
-          pass
+       session.run()
        session.download()
        session.abort()
        session.reset()
