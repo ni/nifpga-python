@@ -1,4 +1,4 @@
-from .status import check_status
+from .status import check_status, VersionMismatchError
 import ctypes
 import ctypes.util
 
@@ -176,14 +176,22 @@ class StatusCheckedLibrary(StatusCheckedFunctions):
         library = ctypes.cdll.LoadLibrary(library)
         function_infos = []
         for lfi in library_function_infos:
-            func = getattr(library, lfi.name_in_library)  # i.e., dlsym()
-            # ctypes functions have special 'argtypes' and 'restype' fields
-            # that we set, so ctypes can automatically convert types and knows
-            # how to call into the library.
-            func.argtypes = [named_argtype.argtype for named_argtype in lfi.named_argtypes]
-            # Assume that everything returns an NiFpga_Status
-            func.restype = StatusType
-
+            try:
+                func = getattr(library, lfi.name_in_library)  # i.e., dlsym()
+                # ctypes functions have special 'argtypes' and 'restype' fields
+                # that we set, so ctypes can automatically convert types and knows
+                # how to call into the library.
+                func.argtypes = [named_argtype.argtype for named_argtype in lfi.named_argtypes]
+                # Assume that everything returns an NiFpga_Status
+                func.restype = StatusType
+            except AttributeError:
+                # if we can't find the symbol, instead insert a function that
+                # always returns the VersionMismatch error, that way they can
+                # use the rest of the API
+                def returnsVersionMismatchError(*args, **kwargs):
+                    """ Always returns the version mismatch error code. """
+                    return VersionMismatchError.CODE
+                func = returnsVersionMismatchError
             function_infos.append(
                 FunctionInfo(function=func,
                              name=lfi.pretty_name,
