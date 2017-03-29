@@ -182,6 +182,33 @@ class StatusCheckedLibraryTestCRunTime(unittest.TestCase):
                 self.assertIn("nptr: b'1'", str(warning))
 
 
+class StatusCheckedLibraryTestFunctionDoesntExist(unittest.TestCase):
+    """
+    New versions of NiFpga will have new functions.  We want the API to support
+    old versions of NiFpga without erroring because it can't find certain symbols.
+    So StatusCheckedLibrary will return FeatureNotSupported for symbols it can't
+    find.
+    """
+    def setUp(self):
+        self._c_runtime = StatusCheckedLibrary(
+            "c",
+            library_function_infos=[
+                LibraryFunctionInfo(
+                    pretty_name="DoesntExist",
+                    name_in_library="functionThatDoesntExist",
+                    named_argtypes=[
+                        NamedArgtype("nptr", ctypes.c_char_p),
+                    ])
+            ])
+
+    def test_correct_error(self):
+        with self.assertRaises(nifpga.VersionMismatchError):
+            self._c_runtime.DoesntExist(b"0")
+        with self.assertRaises(nifpga.VersionMismatchError):
+            self._c_runtime["DoesntExist"](b"0")
+
+
+
 class StatusCheckedLibraryTestMockedLibrary(unittest.TestCase):
     """
     Since we can't load NiFpga on a dev machine unless we have all its
