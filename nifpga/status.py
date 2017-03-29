@@ -7,18 +7,33 @@ Use check_status() to raise an appropriate exception if necessary.
 Error and Warning exception class names are auto-generated from the
 strings in 'codeToString' in this file.
 For example, handle a fatal error like this:
-    try:
-        check_status(-61141, ...)
-    except FpgaBusyError as e:
-        # handle a fatal "FpgaBusy" status code
-        ...
+
+    >>> @check_status('frob', ['foo', 'bar', 'baz'])
+    ... def frob(foo, bar, baz):
+    ...     return -61141
+    ...
+    >>> try:
+    ...     frob(0, 1, 2)
+    ... except FpgaBusyError as e:
+    ...     print(e)  # doctest: +NORMALIZE_WHITESPACE
+    Error: FpgaBusy (-61141) when calling 'frob' with arguments:
+        foo: 0x0
+        bar: 0x1
+        baz: 0x2
 
 Or handle a warning like this:
-    try:
-        check_status(61003, ...)
-    except FpgaAlreadyRunningWarning as e:
-        # handle a "FpgaAlreadyRunning" warning status code
-        ...
+
+    >>> @check_status('frob', ['foo', 'bar', 'baz'])
+    ... def frob(foo, bar, baz):
+    ...     return 61003
+    ...
+    >>> with warnings.catch_warnings(record=True) as w:
+    ...     frob(0, 1, 2)
+    ...     print(w[0].message)  # doctest: +NORMALIZE_WHITESPACE
+    Warning: FpgaAlreadyRunning (61003) when calling 'frob' with arguments:
+        foo: 0x0
+        bar: 0x1
+        baz: 0x2
 
 Copyright (c) 2017 National Instruments
 """

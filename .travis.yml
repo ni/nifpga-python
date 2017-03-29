@@ -10,4 +10,4 @@ install:
 before_script:
   - "flake8 nifpga --ignore=E501"
 script:
-  - "nosetests"
+  - "nosetests --with-doctest"
