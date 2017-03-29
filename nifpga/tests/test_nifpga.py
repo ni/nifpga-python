@@ -208,7 +208,6 @@ class StatusCheckedLibraryTestFunctionDoesntExist(unittest.TestCase):
             self._c_runtime["DoesntExist"](b"0")
 
 
-
 class StatusCheckedLibraryTestMockedLibrary(unittest.TestCase):
     """
     Since we can't load NiFpga on a dev machine unless we have all its
