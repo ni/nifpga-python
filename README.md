@@ -30,13 +30,11 @@ information on sessions view our Read the docs documentation
 Example usage of FPGA configuration functions:
 
     with Session(bitfile="BitfilePath.lvbitx", resource="RIO0") as session:
-       session.run()
-       session.download()
-       session.abort()
-       session.reset()
-       my_control = session.registers["MyControl"]
-       my_control.write(4)
-       data = my_control.read()
+        session.reset()
+        session.run()
+        my_control = session.registers["MyControl"]
+        my_control.write(4)
+        data = my_control.read()
 
 
 See our [readthedocs page](http://nifpga-python.readthedocs.io/en/latest/) for more detailed examples and documentation.
