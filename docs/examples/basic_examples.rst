@@ -15,10 +15,7 @@ Recommended usage is to open a Session as follows:
    from nifpga import Session
 
    with Session(bitfile="MyBitfile.lvbitx", resource="RIO0") as session:
-      try:
-         session.run()
-      except FpgaAlreadyRunningWarning:
-         pass
+      session.run()
       session.download()
       session.abort()
       session.reset()
@@ -37,7 +34,7 @@ Example Usage:
 
 .. code-block:: python
 
-   from nifpga import Session, FpgaAlreadyRunningWarning
+   from nifpga import Session
 
    with Session("MyBitfile.lvbitx", "RIO0") as session:
        my_control = session.registers['My Control']
