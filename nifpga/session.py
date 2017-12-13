@@ -72,6 +72,7 @@ class Session(object):
             bitfile (str)(Bitfile): A bitfile.Bitfile() instance or a string
                                     filepath to a bitfile.
             resource (str): e.g. "RIO0", "PXI1Slot2", or "rio://hostname/RIO0"
+                            or an already open session
             no_run (bool): If true, don't run the bitfile, just open the
                 session.
             reset_if_last_session_on_exit (bool): Passed into Close on
@@ -92,14 +93,17 @@ class Session(object):
         if no_run:
             open_attribute = open_attribute | OPEN_ATTRIBUTE_NO_RUN
 
-        bitfile_path = bytes(bitfile.filepath, 'ascii')
-        bitfile_signature = bytes(bitfile.signature, 'ascii')
-        resource = bytes(resource, 'ascii')
-        self._nifpga.Open(bitfile_path,
-                          bitfile_signature,
-                          resource,
-                          open_attribute,
-                          self._session)
+        if isinstance(resource, _SessionType):
+            self._session = resource
+        else:
+            bitfile_path = bytes(bitfile.filepath, 'ascii')
+            bitfile_signature = bytes(bitfile.signature, 'ascii')
+            resource = bytes(resource, 'ascii')
+            self._nifpga.Open(bitfile_path,
+                              bitfile_signature,
+                              resource,
+                              open_attribute,
+                              self._session)
 
         self._reset_if_last_session_on_exit = reset_if_last_session_on_exit
         self._registers = {}
