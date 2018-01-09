@@ -1,0 +1,1847 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+
+<Bitfile>
+	    <BitfileVersion>4.0</BitfileVersion>
+	    <Documentation>
+		      <BuildSpecVersion/>
+		      <BuildSpecDescription/>
+	</Documentation>
+	    <SignatureRegister>D0E2AE45F1AC4D94E2D359B310603D67</SignatureRegister>
+	    <SignatureGuids>469B9E3376A559B2C89615056038B0F8</SignatureGuids>
+	    <SignatureNames>DD5B8A860CC1E170D759825F1B5D0365</SignatureNames>
+	    <TimeStamp/>
+	    <CompilationStatus/>
+	    <BitstreamVersion>2</BitstreamVersion>
+	    <VI>
+		      <Name>FPGA.vi</Name>
+		      <RegisterList>
+			      <Register>
+				        <Name>Input I8</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <I8>
+						          <Name>Input I8</Name>
+					</I8>
+				</Datatype>
+				        <FlattenedType>1300800000000001000F40010008496E70757420493800000100000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>2</Offset>
+				        <SizeInBits>8</SizeInBits>
+				        <Class>18</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>2</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output Array I32 1</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Output Array I32 1</Name>
+						          <Size>1</Size>
+						          <Type>
+							          <I32>
+								            <Name>OutputI8 3</Name>
+							</I32>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114003000A4F75747075744938203300002040400001800000010000124F75747075742041727261792049333220310000010001000000010000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>4</Offset>
+				        <SizeInBits>32</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>55</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input Array I32 1</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Input Array I32 1</Name>
+						          <Size>1</Size>
+						          <Type>
+							          <I32>
+								            <Name>OutputI8 3</Name>
+							</I32>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114003000A4F75747075744938203300001E4040000180000001000011496E70757420417272617920493332203100010001000000010000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>8</Offset>
+				        <SizeInBits>32</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>54</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output Array U16 2</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Output Array U16 2</Name>
+						          <Size>2</Size>
+						          <Type>
+							          <U16>
+								            <Name>OutputI8 3</Name>
+							</U16>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114006000A4F75747075744938203300002040400001800000020000124F75747075742041727261792055313620320000010001000000020000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>12</Offset>
+				        <SizeInBits>32</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>53</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input Array U16 2</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Input Array U16 2</Name>
+						          <Size>2</Size>
+						          <Type>
+							          <U16>
+								            <Name>OutputI8 3</Name>
+							</U16>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114006000A4F75747075744938203300001E4040000180000002000011496E70757420417272617920553136203200010001000000020000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>16</Offset>
+				        <SizeInBits>32</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>52</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output Array I16 1</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Output Array I16 1</Name>
+						          <Size>1</Size>
+						          <Type>
+							          <I16>
+								            <Name>OutputI8 3</Name>
+							</I16>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114002000A4F75747075744938203300002040400001800000010000124F7574707574204172726179204931362031000001000100000001000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>22</Offset>
+				        <SizeInBits>16</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>51</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input Array I16 1</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Input Array I16 1</Name>
+						          <Size>1</Size>
+						          <Type>
+							          <I16>
+								            <Name>OutputI8 3</Name>
+							</I16>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114002000A4F75747075744938203300001E4040000180000001000011496E7075742041727261792049313620310001000100000001000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>26</Offset>
+				        <SizeInBits>16</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>50</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output Array U8 4</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Output Array U8 4</Name>
+						          <Size>4</Size>
+						          <Type>
+							          <U8>
+								            <Name>OutputI8 3</Name>
+							</U8>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114005000A4F75747075744938203300001E40400001800000040000114F7574707574204172726179205538203400010001000000040000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>28</Offset>
+				        <SizeInBits>32</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>49</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input Array U8 4</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Input Array U8 4</Name>
+						          <Size>4</Size>
+						          <Type>
+							          <U8>
+								            <Name>OutputI8 3</Name>
+							</U8>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114005000A4F75747075744938203300001E4040000180000004000010496E70757420417272617920553820340000010001000000040000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>32</Offset>
+				        <SizeInBits>32</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>48</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output Array I8 3</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Output Array I8 3</Name>
+						          <Size>3</Size>
+						          <Type>
+							          <I8>
+								            <Name>OutputI8 3</Name>
+							</I8>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114001000A4F75747075744938203300001E40400001800000030000114F75747075742041727261792049382033000100010000000300000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>36</Offset>
+				        <SizeInBits>24</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>47</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input Array I8 3</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Input Array I8 3</Name>
+						          <Size>3</Size>
+						          <Type>
+							          <I8>
+								            <Name>OutputI8 3</Name>
+							</I8>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114001000A4F75747075744938203300001E4040000180000003000010496E707574204172726179204938203300000100010000000300000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>40</Offset>
+				        <SizeInBits>24</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>46</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output Array U8 2</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Output Array U8 2</Name>
+						          <Size>2</Size>
+						          <Type>
+							          <U8>
+								            <Name>OutputI8 3</Name>
+							</U8>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114005000A4F75747075744938203300001E40400001800000020000114F757470757420417272617920553820320001000100000002000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>46</Offset>
+				        <SizeInBits>16</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>45</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input Array U8 2</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Input Array U8 2</Name>
+						          <Size>2</Size>
+						          <Type>
+							          <U8>
+								            <Name>OutputI8 3</Name>
+							</U8>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114005000A4F75747075744938203300001E4040000180000002000010496E7075742041727261792055382032000001000100000002000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>50</Offset>
+				        <SizeInBits>16</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>44</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output Array I8 1</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Output Array I8 1</Name>
+						          <Size>1</Size>
+						          <Type>
+							          <I8>
+								            <Name>OutputI8 3</Name>
+							</I8>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114001000A4F75747075744938203300001E40400001800000010000114F7574707574204172726179204938203100010001000000010000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>54</Offset>
+				        <SizeInBits>8</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>43</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input Array I8 1</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Input Array I8 1</Name>
+						          <Size>1</Size>
+						          <Type>
+							          <I8>
+								            <Name>OutputI8 3</Name>
+							</I8>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114001000A4F75747075744938203300001E4040000180000001000010496E70757420417272617920493820310000010001000000010000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>58</Offset>
+				        <SizeInBits>8</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>42</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output Array Bool 17</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Output Array Bool 17</Name>
+						          <Size>17</Size>
+						          <Type>
+							          <Boolean>
+								            <Name>OutputBool 3</Name>
+							</Boolean>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>1300800000000002001240210C4F7574707574426F6F6C203300002240400001800000110000144F757470757420417272617920426F6F6C203137000001000100000011000000000000000000000000000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>60</Offset>
+				        <SizeInBits>17</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>41</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input Array Bool 17</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Input Array Bool 17</Name>
+						          <Size>17</Size>
+						          <Type>
+							          <Boolean>
+								            <Name>OutputBool 3</Name>
+							</Boolean>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>1300800000000002001240210C4F7574707574426F6F6C20330000204040000180000011000013496E70757420417272617920426F6F6C2031370001000100000011000000000000000000000000000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>64</Offset>
+				        <SizeInBits>17</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>40</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output Array Bool 16</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Output Array Bool 16</Name>
+						          <Size>16</Size>
+						          <Type>
+							          <Boolean>
+								            <Name>OutputBool 3</Name>
+							</Boolean>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>1300800000000002001240210C4F7574707574426F6F6C203300002240400001800000100000144F757470757420417272617920426F6F6C2031360000010001000000100000000000000000000000000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>70</Offset>
+				        <SizeInBits>16</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>39</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input Array Bool 16</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Input Array Bool 16</Name>
+						          <Size>16</Size>
+						          <Type>
+							          <Boolean>
+								            <Name>OutputBool 3</Name>
+							</Boolean>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>1300800000000002001240210C4F7574707574426F6F6C20330000204040000180000010000013496E70757420417272617920426F6F6C20313600010001000000100000000000000000000000000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>74</Offset>
+				        <SizeInBits>16</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>38</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output Array U64 1</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Output Array U64 1</Name>
+						          <Size>1</Size>
+						          <Type>
+							          <U64>
+								            <Name>OutputI8 3</Name>
+							</U64>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114008000A4F75747075744938203300002040400001800000010000124F7574707574204172726179205536342031000001000100000001000000000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>76</Offset>
+				        <SizeInBits>64</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>37</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input Array U64 1</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Input Array U64 1</Name>
+						          <Size>1</Size>
+						          <Type>
+							          <U64>
+								            <Name>OutputI8 3</Name>
+							</U64>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114008000A4F75747075744938203300001E4040000180000001000011496E7075742041727261792055363420310001000100000001000000000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>80</Offset>
+				        <SizeInBits>64</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>36</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output Array U64</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Output Array U64</Name>
+						          <Size>3</Size>
+						          <Type>
+							          <U64>
+								            <Name>OutputI8 3</Name>
+							</U64>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114008000A4F75747075744938203300001E40400001800000030000104F75747075742041727261792055363400000100010000000300000000000000000000000000000000000000000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>84</Offset>
+				        <SizeInBits>192</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>35</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input Array U64</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Input Array U64</Name>
+						          <Size>3</Size>
+						          <Type>
+							          <U64>
+								            <Name>OutputI8 3</Name>
+							</U64>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114008000A4F75747075744938203300001C404000018000000300000F496E70757420417272617920553634000100010000000300000000000000000000000000000000000000000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>88</Offset>
+				        <SizeInBits>192</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>34</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output Array I64</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Output Array I64</Name>
+						          <Size>2</Size>
+						          <Type>
+							          <I64>
+								            <Name>OutputI8 3</Name>
+							</I64>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114004000A4F75747075744938203300001E40400001800000020000104F7574707574204172726179204936340000010001000000020000000000000000000000000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>92</Offset>
+				        <SizeInBits>128</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>33</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input Array I64</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Input Array I64</Name>
+						          <Size>2</Size>
+						          <Type>
+							          <I64>
+								            <Name>OutputI8 3</Name>
+							</I64>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114004000A4F75747075744938203300001C404000018000000200000F496E7075742041727261792049363400010001000000020000000000000000000000000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>96</Offset>
+				        <SizeInBits>128</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>32</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output Array U32</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Output Array U32</Name>
+						          <Size>3</Size>
+						          <Type>
+							          <U32>
+								            <Name>OutputI8 3</Name>
+							</U32>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114007000A4F75747075744938203300001E40400001800000030000104F75747075742041727261792055333200000100010000000300000000000000000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>100</Offset>
+				        <SizeInBits>96</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>31</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input Array U32</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Input Array U32</Name>
+						          <Size>3</Size>
+						          <Type>
+							          <U32>
+								            <Name>OutputI8 3</Name>
+							</U32>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114007000A4F75747075744938203300001C404000018000000300000F496E70757420417272617920553332000100010000000300000000000000000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>104</Offset>
+				        <SizeInBits>96</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>30</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output Array I32</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Output Array I32</Name>
+						          <Size>2</Size>
+						          <Type>
+							          <I32>
+								            <Name>OutputI8 3</Name>
+							</I32>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114003000A4F75747075744938203300001E40400001800000020000104F757470757420417272617920493332000001000100000002000000000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>108</Offset>
+				        <SizeInBits>64</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>29</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input Array I32</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Input Array I32</Name>
+						          <Size>2</Size>
+						          <Type>
+							          <I32>
+								            <Name>OutputI8 3</Name>
+							</I32>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114003000A4F75747075744938203300001C404000018000000200000F496E707574204172726179204933320001000100000002000000000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>112</Offset>
+				        <SizeInBits>64</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>28</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output Array U16</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Output Array U16</Name>
+						          <Size>4</Size>
+						          <Type>
+							          <U16>
+								            <Name>OutputI8 3</Name>
+							</U16>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114006000A4F75747075744938203300001E40400001800000040000104F757470757420417272617920553136000001000100000004000000000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>116</Offset>
+				        <SizeInBits>64</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>27</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input Array U16</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Input Array U16</Name>
+						          <Size>4</Size>
+						          <Type>
+							          <U16>
+								            <Name>OutputI8 3</Name>
+							</U16>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114006000A4F75747075744938203300001C404000018000000400000F496E707574204172726179205531360001000100000004000000000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>120</Offset>
+				        <SizeInBits>64</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>26</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output Array I16</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Output Array I16</Name>
+						          <Size>3</Size>
+						          <Type>
+							          <I16>
+								            <Name>OutputI8 3</Name>
+							</I16>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114002000A4F75747075744938203300001E40400001800000030000104F75747075742041727261792049313600000100010000000300000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>124</Offset>
+				        <SizeInBits>48</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>25</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input Array I16</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Input Array I16</Name>
+						          <Size>3</Size>
+						          <Type>
+							          <I16>
+								            <Name>OutputI8 3</Name>
+							</I16>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114002000A4F75747075744938203300001C404000018000000300000F496E70757420417272617920493136000100010000000300000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>128</Offset>
+				        <SizeInBits>48</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>24</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output Array U8</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Output Array U8</Name>
+						          <Size>6</Size>
+						          <Type>
+							          <U8>
+								            <Name>OutputI8 3</Name>
+							</U8>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114005000A4F75747075744938203300001C404000018000000600000F4F7574707574204172726179205538000100010000000600000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>132</Offset>
+				        <SizeInBits>48</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>23</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input Array U8</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Input Array U8</Name>
+						          <Size>6</Size>
+						          <Type>
+							          <U8>
+								            <Name>OutputI8 3</Name>
+							</U8>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114005000A4F75747075744938203300001C404000018000000600000E496E70757420417272617920553800000100010000000600000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>136</Offset>
+				        <SizeInBits>48</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>22</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output Array I8</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Output Array I8</Name>
+						          <Size>5</Size>
+						          <Type>
+							          <I8>
+								            <Name>OutputI8 3</Name>
+							</I8>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114001000A4F75747075744938203300001C404000018000000500000F4F75747075742041727261792049380001000100000005000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>140</Offset>
+				        <SizeInBits>40</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>21</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input Array I8</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Input Array I8</Name>
+						          <Size>5</Size>
+						          <Type>
+							          <I8>
+								            <Name>OutputI8 3</Name>
+							</I8>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>130080000000000200114001000A4F75747075744938203300001C404000018000000500000E496E707574204172726179204938000001000100000005000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>144</Offset>
+				        <SizeInBits>40</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>20</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output Array Bool</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Output Array Bool</Name>
+						          <Size>33</Size>
+						          <Type>
+							          <Boolean>
+								            <Name>OutputBool 3</Name>
+							</Boolean>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>1300800000000002001240210C4F7574707574426F6F6C203300001E40400001800000210000114F757470757420417272617920426F6F6C000100010000002100000000000000000000000000000000000000000000000000000000000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>148</Offset>
+				        <SizeInBits>33</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>19</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input Array Bool</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name>Input Array Bool</Name>
+						          <Size>33</Size>
+						          <Type>
+							          <Boolean>
+								            <Name>OutputBool 3</Name>
+							</Boolean>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType>1300800000000002001240210C4F7574707574426F6F6C203300001E4040000180000021000010496E70757420417272617920426F6F6C00000100010000002100000000000000000000000000000000000000000000000000000000000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>152</Offset>
+				        <SizeInBits>33</SizeInBits>
+				        <Class>14</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>18</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output U64</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <U64>
+						          <Name>Output U64</Name>
+					</U64>
+				</Datatype>
+				        <FlattenedType>130080000000000100114008000A4F7574707574205536340000010000000000000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>156</Offset>
+				        <SizeInBits>64</SizeInBits>
+				        <Class>18</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>17</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input U64</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <U64>
+						          <Name>Input U64</Name>
+					</U64>
+				</Datatype>
+				        <FlattenedType>1300800000000001000F40080009496E7075742055363400010000000000000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>160</Offset>
+				        <SizeInBits>64</SizeInBits>
+				        <Class>18</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>16</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output I64</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <I64>
+						          <Name>Output I64</Name>
+					</I64>
+				</Datatype>
+				        <FlattenedType>130080000000000100114004000A4F7574707574204936340000010000000000000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>164</Offset>
+				        <SizeInBits>64</SizeInBits>
+				        <Class>18</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>15</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input I64</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <I64>
+						          <Name>Input I64</Name>
+					</I64>
+				</Datatype>
+				        <FlattenedType>1300800000000001000F40040009496E7075742049363400010000000000000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>168</Offset>
+				        <SizeInBits>64</SizeInBits>
+				        <Class>18</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>14</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output U32</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <U32>
+						          <Name>Output U32</Name>
+					</U32>
+				</Datatype>
+				        <FlattenedType>130080000000000100114007000A4F75747075742055333200000100000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>172</Offset>
+				        <SizeInBits>32</SizeInBits>
+				        <Class>18</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>13</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input U32</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <U32>
+						          <Name>Input U32</Name>
+					</U32>
+				</Datatype>
+				        <FlattenedType>1300800000000001000F40070009496E70757420553332000100000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>176</Offset>
+				        <SizeInBits>32</SizeInBits>
+				        <Class>18</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>12</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output I32</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <I32>
+						          <Name>Output I32</Name>
+					</I32>
+				</Datatype>
+				        <FlattenedType>130080000000000100114003000A4F75747075742049333200000100000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>180</Offset>
+				        <SizeInBits>32</SizeInBits>
+				        <Class>18</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>11</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input I32</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <I32>
+						          <Name>Input I32</Name>
+					</I32>
+				</Datatype>
+				        <FlattenedType>1300800000000001000F40030009496E70757420493332000100000000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>184</Offset>
+				        <SizeInBits>32</SizeInBits>
+				        <Class>18</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>10</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output U16</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <U16>
+						          <Name>Output U16</Name>
+					</U16>
+				</Datatype>
+				        <FlattenedType>130080000000000100114006000A4F7574707574205531360000010000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>190</Offset>
+				        <SizeInBits>16</SizeInBits>
+				        <Class>18</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>9</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input U16</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <U16>
+						          <Name>Input U16</Name>
+					</U16>
+				</Datatype>
+				        <FlattenedType>1300800000000001000F40060009496E7075742055313600010000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>194</Offset>
+				        <SizeInBits>16</SizeInBits>
+				        <Class>18</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>8</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output I16</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <I16>
+						          <Name>Output I16</Name>
+					</I16>
+				</Datatype>
+				        <FlattenedType>130080000000000100114002000A4F7574707574204931360000010000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>198</Offset>
+				        <SizeInBits>16</SizeInBits>
+				        <Class>18</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>7</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input I16</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <I16>
+						          <Name>Input I16</Name>
+					</I16>
+				</Datatype>
+				        <FlattenedType>1300800000000001000F40020009496E7075742049313600010000000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>202</Offset>
+				        <SizeInBits>16</SizeInBits>
+				        <Class>18</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>6</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output U8</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <U8>
+						          <Name>Output U8</Name>
+					</U8>
+				</Datatype>
+				        <FlattenedType>1300800000000001000F400500094F7574707574205538000100000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>206</Offset>
+				        <SizeInBits>8</SizeInBits>
+				        <Class>18</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>5</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input U8</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <U8>
+						          <Name>Input U8</Name>
+					</U8>
+				</Datatype>
+				        <FlattenedType>1300800000000001000F40050008496E70757420553800000100000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>210</Offset>
+				        <SizeInBits>8</SizeInBits>
+				        <Class>18</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>4</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output I8</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <I8>
+						          <Name>Output I8</Name>
+					</I8>
+				</Datatype>
+				        <FlattenedType>1300800000000001000F400100094F7574707574204938000100000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>214</Offset>
+				        <SizeInBits>8</SizeInBits>
+				        <Class>18</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>3</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Output Bool</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <Boolean>
+						          <Name>Output Bool</Name>
+					</Boolean>
+				</Datatype>
+				        <FlattenedType>1300800000000001001040210B4F757470757420426F6F6C000100000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>218</Offset>
+				        <SizeInBits>1</SizeInBits>
+				        <Class>8</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>1</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>Input Bool</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <Boolean>
+						          <Name>Input Bool</Name>
+					</Boolean>
+				</Datatype>
+				        <FlattenedType>1300800000000001001040210A496E70757420426F6F6C00000100000000000000</FlattenedType>
+				        <Grouping/>
+				        <Offset>222</Offset>
+				        <SizeInBits>1</SizeInBits>
+				        <Class>8</Class>
+				        <Internal>false</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>0</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>ViSignature</Name>
+				        <Hidden>true</Hidden>
+				        <Indicator>true</Indicator>
+				        <Datatype>
+					        <Array>
+						          <Name/>
+						          <Size>4</Size>
+						          <Type>
+							          <U32>
+								            <Name/>
+							</U32>
+						</Type>
+					</Array>
+				</Datatype>
+				        <FlattenedType/>
+				        <Grouping/>
+				        <Offset>131060</Offset>
+				        <SizeInBits>128</SizeInBits>
+				        <Class>0</Class>
+				        <Internal>true</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>0</ID>
+				        <Bidirectional>false</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>DiagramReset</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <U32>
+						          <Name/>
+					</U32>
+				</Datatype>
+				        <FlattenedType/>
+				        <Grouping/>
+				        <Offset>131068</Offset>
+				        <SizeInBits>32</SizeInBits>
+				        <Class>0</Class>
+				        <Internal>true</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>0</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>ViControl</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <U32>
+						          <Name/>
+					</U32>
+				</Datatype>
+				        <FlattenedType/>
+				        <Grouping/>
+				        <Offset>131064</Offset>
+				        <SizeInBits>32</SizeInBits>
+				        <Class>0</Class>
+				        <Internal>true</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>0</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>InterruptEnable</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <U32>
+						          <Name/>
+					</U32>
+				</Datatype>
+				        <FlattenedType/>
+				        <Grouping/>
+				        <Offset>131044</Offset>
+				        <SizeInBits>32</SizeInBits>
+				        <Class>0</Class>
+				        <Internal>true</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>0</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>InterruptMask</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <U32>
+						          <Name/>
+					</U32>
+				</Datatype>
+				        <FlattenedType/>
+				        <Grouping/>
+				        <Offset>131052</Offset>
+				        <SizeInBits>32</SizeInBits>
+				        <Class>0</Class>
+				        <Internal>true</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>0</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+			      <Register>
+				        <Name>InterruptStatus</Name>
+				        <Hidden>false</Hidden>
+				        <Indicator>false</Indicator>
+				        <Datatype>
+					        <U32>
+						          <Name/>
+					</U32>
+				</Datatype>
+				        <FlattenedType/>
+				        <Grouping/>
+				        <Offset>131056</Offset>
+				        <SizeInBits>32</SizeInBits>
+				        <Class>0</Class>
+				        <Internal>true</Internal>
+				        <TypedefPath/>
+				        <TypedefRelativePath/>
+				        <ID>0</ID>
+				        <Bidirectional>true</Bidirectional>
+				        <Synchronous>false</Synchronous>
+				        <MechanicalAction>Switch When Pressed</MechanicalAction>
+				        <AccessMayTimeout>false</AccessMayTimeout>
+				        <RegisterNode>false</RegisterNode>
+				        <SubControlList/>
+			</Register>
+		</RegisterList>
+		      <Icon>
+			      <ImageType>0</ImageType>
+			      <ImageDepth>8</ImageDepth>
+			      <Image>////////////////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAA/////////////////////////wAAAAAAAAAAAP//AAD/+fn5+fn5+fn5+fn59/ks+SzgAAAAAAAAAAAA//8AAP/5///////////////3+Sz5LP8AAAAAAAAAAAD//wAA//n/6OTo////6OTo//f8K/ws/wAAAAAAAAAAAP//AAD/+f/k/+T////k/+T/9ywsLCzgAAAAAAAAAAAA//8AAP/56OT/5Oj/6OT/5Oj3K/wrLP8AAAAAAAAAAAD//wAA//nk6P/o5P/k6P/o5Pf8CPws/wAAAAAAAAAAAP//AAD/+eT////k/+T////k9/wI/Cz/AAAAAAAAAAAA//8AAP/5/////+jk6P/////3K/wrLP8AAAAAAAAAAAD//wAA//n///////////////csLCws/wAAAAAAAAAAAP//AAD/9/f39/f39/f39/f39ywsg4P/AAAAAAAAAAAA//8AAP8sLCwsLCwsLCwsLCwsLCyDBYODAAAAAAAAAAD//wAA/yz8LCwsLCz8LCwsLCMjI4MFBQWDgwAAAAAAAP//AAD//PD8LCws/CP8LCMjLCwsgwUF/wUFg4MAAAAA//8AAP8s7ywsLCwjLCwjLCwsLCyDBf///wUFBYMjIwD//wAA///w////I///I////////4MFBf8FBYODAAAAAP//AAAAAO8AAAAjAAAjAADw7+/wgwUFBYODAAAAAAAA//8AAAAAAPAAAAAjIwAA7wAAAACDBYODAAAAAAAAAAD//wAAAAAAAO/vAAAAAPAAAAAAAIODAAAAAAAAAAAAAP//AAAAAAAAAADw7/DvAAAAAAAAAAAAAAAAAP8AAAAA//8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAAAAD//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/AAAAAP//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP8AAAAA//8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/wAAAAD//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/AAAAAP//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP8AAAAA//8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP///////////////////////////////////////////w==</Image>
+			      <Mask>//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////8=</Mask>
+			      <Colors>AP///wD//8wA//+ZAP//ZgD//zMA//8AAP/M/wD/zMwA/8yZAP/MZgD/zDMA/8wAAP+Z/wD/mcwA/5mZAP+ZZgD/mTMA/5kAAP9m/wD/ZswA/2aZAP9mZgD/ZjMA/2YAAP8z/wD/M8wA/zOZAP8zZgD/MzMA/zMAAP8A/wD/AMwA/wCZAP8AZgD/ADMA/wAAAMz//wDM/8wAzP+ZAMz/ZgDM/zMAzP8AAMzM/wDMzMwAzMyZAMzMZgDMzDMAzMwAAMyZ/wDMmcwAzJmZAMyZZgDMmTMAzJkAAMxm/wDMZswAzGaZAMxmZgDMZjMAzGYAAMwz/wDMM8wAzDOZAMwzZgDMMzMAzDMAAMwA/wDMAMwAzACZAMwAZgDMADMAzAAAAJn//wCZ/8wAmf+ZAJn/ZgCZ/zMAmf8AAJnM/wCZzMwAmcyZAJnMZgCZzDMAmcwAAJmZ/wCZmcwAmZmZAJmZZgCZmTMAmZkAAJlm/wCZZswAmWaZAJlmZgCZZjMAmWYAAJkz/wCZM8wAmTOZAJkzZgCZMzMAmTMAAJkA/wCZAMwAmQCZAJkAZgCZADMAmQAAAGb//wBm/8wAZv+ZAGb/ZgBm/zMAZv8AAGbM/wBmzMwAZsyZAGbMZgBmzDMAZswAAGaZ/wBmmcwAZpmZAGaZZgBmmTMAZpkAAGZm/wBmZswAZmaZAGZmZgBmZjMAZmYAAGYz/wBmM8wAZjOZAGYzZgBmMzMAZjMAAGYA/wBmAMwAZgCZAGYAZgBmADMAZgAAADP//wAz/8wAM/+ZADP/ZgAz/zMAM/8AADPM/wAzzMwAM8yZADPMZgAzzDMAM8wAADOZ/wAzmcwAM5mZADOZZgAzmTMAM5kAADNm/wAzZswAM2aZADNmZgAzZjMAM2YAADMz/wAzM8wAMzOZADMzZgAzMzMAMzMAADMA/wAzAMwAMwCZADMAZgAzADMAMwAAAAD//wAA/8wAAP+ZAAD/ZgAA/zMAAP8AAADM/wAAzMwAAMyZAADMZgAAzDMAAMwAAACZ/wAAmcwAAJmZAACZZgAAmTMAAJkAAABm/wAAZswAAGaZAABmZgAAZjMAAGYAAAAz/wAAM8wAADOZAAAzZgAAMzMAADMAAAAA/wAAAMwAAACZAAAAZgAAADMA7gAAAN0AAAC7AAAAqgAAAIgAAAB3AAAAVQAAAEQAAAAiAAAAEQAAAADuAAAA3QAAALsAAACqAAAAiAAAAHcAAABVAAAARAAAACIAAAARAAAAAO4AAADdAAAAuwAAAKoAAACIAAAAdwAAAFUAAABEAAAAIgAAABEA7u7uAN3d3QC7u7sAqqqqAIiIiAB3d3cAVVVVAERERAAiIiIAERERAAAAAA==</Colors>
+			      <Rectangle>
+				        <Left>0</Left>
+				        <Top>0</Top>
+				        <Right>32</Right>
+				        <Bottom>32</Bottom>
+			</Rectangle>
+		</Icon>
+	</VI>
+	    <Project>
+		      <TargetClass>PXIe-7966R</TargetClass>
+		      <AutoRunWhenDownloaded>false</AutoRunWhenDownloaded>
+		      <CompilationResultsTree>
+          <CompilationResults>
+           <NiFlexRio>
+              <Puma2>
+               <BitstreamVersion>2</BitstreamVersion>
+      </Puma2>
+   </NiFlexRio>
+           <NiFpga>
+              <BaseAddressOnDevice>0</BaseAddressOnDevice>
+              <DmaChannelAllocationList/>
+              <UsedBaseClockList>
+               <BaseClock name="ChinchClk">
+         </BaseClock>
+               <BaseClock name="ReliableClkIn">
+         </BaseClock>
+               <BaseClock name="40 MHz Onboard Clock">
+         </BaseClock>
+      </UsedBaseClockList>
+              <version>1</version>
+   </NiFpga>
+</CompilationResults> </CompilationResultsTree>
+		      <MultipleUserClocks>false</MultipleUserClocks>
+		      <AllowImplicitEnableRemoval>false</AllowImplicitEnableRemoval>
+	</Project>
+	    <ClientData/>
+	    <BitstreamMD5>8189dd7de0db34ddd7ae8036457ca2be</BitstreamMD5>
+	    <Bitstream></Bitstream>
+</Bitfile>

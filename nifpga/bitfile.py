@@ -1,6 +1,6 @@
 import os
 import warnings
-from xml.etree.ElementTree import ElementTree
+import xml.etree.ElementTree as ElementTree
 from nifpga import DataType
 
 
@@ -11,9 +11,14 @@ class Bitfile(object):
     .lvbitx file.  This class can be used to lookup registers and FIFOs and
     is mostly intended to be used by Session.
     """
-    def __init__(self, filepath):
-        self._filepath = os.path.abspath(filepath)
-        tree = ElementTree().parse(self._filepath)
+    def __init__(self, filepath, parse_contents=False):
+        if parse_contents:
+            self._filepath = None
+            tree = ElementTree.fromstring(filepath)
+        else:
+            self._filepath = os.path.abspath(filepath)
+            tree = ElementTree.ElementTree().parse(self._filepath)
+
         self._signature = tree.find("SignatureRegister").text.upper()
 
         project = tree.find("Project")
