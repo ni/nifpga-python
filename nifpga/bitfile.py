@@ -28,7 +28,7 @@ class Bitfile(object):
         self._base_address_on_device = int(nifpga.find("BaseAddressOnDevice").text)
         self._registers = {}
         for reg_xml in tree.find("VI").find("RegisterList"):
-            reg = Register(reg_xml)
+            reg = create_register(reg_xml)
             if reg.datatype is not None:
                 assert reg.name not in self._registers, \
                     "One or more registers have the same name '%s', this is not supported" % reg.name
@@ -70,6 +70,16 @@ class Bitfile(object):
         base_address_on_device + register_offset
         """
         return self._base_address_on_device
+
+    def create_register(xml):
+        register = Register(xml)
+        if (_is_register_fxp(register)):
+            register = Fxp_Register(xml, register)
+        return register
+
+    def _is_register_fxp(register):
+        return register.datatype is DataType.FXP
+            or register.datatype is Datatype.CFXP
 
 
 class Register(object):
@@ -169,6 +179,22 @@ class Register(object):
                 "\tType: %s\n" % self._datatype +
                 "\tNum Elements: %d\n" % len(self) +
                 "\tOffset: %d\n" % self._offset)
+
+
+class Fxp_Register(Register):
+    """
+    A fixed point control or indicator from the front panel of the top level
+    FPGA VI.
+    """
+    def __init__(self, xml, register):
+        _copy_values_from_register(register)
+
+    def _copy_values_from_register(register):
+        self._name = register.name
+        self._offset = register.offset
+        self._access_may_timeout = register.access_may_timeout()
+        self._internal = register.is_internal()
+        self._is_array = register.is_array()
 
 
 class Fifo(object):

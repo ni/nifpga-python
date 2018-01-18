@@ -26,6 +26,8 @@ class DataType(Enum):
     U64 = 9
     Sgl = 10
     Dbl = 11
+    FXP = 12
+    CFXP = 13
 
     def __str__(self):
         return self.name
@@ -44,6 +46,8 @@ class DataType(Enum):
             DataType.U64: ctypes.c_uint64,
             DataType.Sgl: ctypes.c_float,
             DataType.Dbl: ctypes.c_double,
+            DataType.FXP: ctypes.c_double,
+            DataType.CFXP: ctypes.c_double,
         }
         return _datatype_ctype[self]
 

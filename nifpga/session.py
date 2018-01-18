@@ -7,7 +7,7 @@ Copyright (c) 2017 National Instruments
 from .nifpga import (_SessionType, _IrqContextType, _NiFpga, DataType,
                      OPEN_ATTRIBUTE_NO_RUN, RUN_ATTRIBUTE_WAIT_UNTIL_DONE,
                      CLOSE_ATTRIBUTE_NO_RESET_IF_LAST_SESSION)
-from .bitfile import Bitfile
+from .bitfile import Bitfile, Fxp_Register
 from .status import InvalidSessionError
 from collections import namedtuple
 import ctypes
@@ -112,22 +112,12 @@ class Session(object):
         for name, bitfile_register in iteritems(bitfile.registers):
             assert name not in self._registers, \
                 "One or more registers have the same name '%s', this is not supported" % name
-            if bitfile_register.is_array():
-                array_register = _ArrayRegister(self._session, self._nifpga,
-                                                bitfile_register,
-                                                base_address_on_device)
-                if bitfile_register.is_internal():
-                    self._internal_registers_dict[name] = array_register
-                else:
-                    self._registers[name] = array_register
-
+            register = self._create_register(bitfile_register,
+                                             base_address_on_device)
+            if bitfile_register.is_internal():
+                self._internal_registers_dict[name] = register
             else:
-                register = _Register(self._session, self._nifpga,
-                                     bitfile_register, base_address_on_device)
-                if bitfile_register.is_internal():
-                    self._internal_registers_dict[name] = register
-                else:
-                    self._registers[name] = register
+                self._registers[name] = register
 
         self._fifos = {}
         for name, bitfile_fifo in iteritems(bitfile.fifos):
@@ -265,6 +255,24 @@ class Session(object):
         """
         return self._fifos
 
+    def _create_register(self, bitfile_register, base_address_on_device):
+        if bitfile_register.is_array():
+            if bitfile_register is Fxp_Register:
+                pass
+            else:
+                return _ArrayRegister(self._session,
+                                      self._nifpga,
+                                      bitfile_register,
+                                      base_address_on_device)
+        else:
+            if bitfile_register is Fxp_Register:
+                pass
+            else:
+                return _Register(self._session,
+                                 self._nifpga,
+                                 bitfile_register,
+                                 base_address_on_device)
+
 
 class _Register(object):
     """ _Register is a private class that is a wrapper of logic that is
@@ -280,10 +288,8 @@ class _Register(object):
         self._datatype = bitfile_register.datatype
         self._name = bitfile_register.name
         self._session = session
-        self._write_func = nifpga["WriteArray%s" % self._datatype] if bitfile_register.is_array() \
-            else nifpga["Write%s" % self._datatype]
-        self._read_func = nifpga["ReadArray%s" % self._datatype] if bitfile_register.is_array() \
-            else nifpga["Read%s" % self._datatype]
+        self._write_func = nifpga["Write%s" % self._datatype]
+        self._read_func = nifpga["Read%s" % self._datatype]
         self._ctype_type = self._datatype._return_ctype()
         self._resource = bitfile_register.offset + base_address_on_device
         if bitfile_register.access_may_timeout():
