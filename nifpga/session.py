@@ -280,10 +280,8 @@ class _Register(object):
         self._datatype = bitfile_register.datatype
         self._name = bitfile_register.name
         self._session = session
-        self._write_func = nifpga["WriteArray%s" % self._datatype] if bitfile_register.is_array() \
-            else nifpga["Write%s" % self._datatype]
-        self._read_func = nifpga["ReadArray%s" % self._datatype] if bitfile_register.is_array() \
-            else nifpga["Read%s" % self._datatype]
+        self._write_func = nifpga["Write%s" % self._datatype]
+        self._read_func = nifpga["Read%s" % self._datatype]
         self._ctype_type = self._datatype._return_ctype()
         self._resource = bitfile_register.offset + base_address_on_device
         if bitfile_register.access_may_timeout():
