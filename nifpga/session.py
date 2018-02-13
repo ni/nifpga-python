@@ -12,7 +12,9 @@ from .status import InvalidSessionError
 from collections import namedtuple
 import ctypes
 from builtins import bytes
+from decimal import Decimal
 from future.utils import iteritems
+from warnings import warn
 
 
 class Session(object):
@@ -244,7 +246,7 @@ class Session(object):
 
     @property
     def _internal_registers(self):
-        """ This property contains interal regis"""
+        """ This property contains internal registers"""
         return self._internal_registers_dict
 
     @property
@@ -256,22 +258,22 @@ class Session(object):
         return self._fifos
 
     def _create_register(self, bitfile_register, base_address_on_device):
+
         if bitfile_register.is_array():
-            if bitfile_register is Fxp_Register:
-                pass
-            else:
-                return _ArrayRegister(self._session,
-                                      self._nifpga,
-                                      bitfile_register,
-                                      base_address_on_device)
-        else:
-            if bitfile_register is Fxp_Register:
-                pass
-            else:
-                return _Register(self._session,
-                                 self._nifpga,
-                                 bitfile_register,
-                                 base_address_on_device)
+            return _ArrayRegister(self._session,
+                                  self._nifpga,
+                                  bitfile_register,
+                                  base_address_on_device)
+        elif bitfile_register is Fxp_Register:
+            return _FxpRegister(self._session,
+                                self._nifpga,
+                                bitfile_register,
+                                base_address_on_device)
+        else:  # default register
+            return _Register(self._session,
+                             self._nifpga,
+                             bitfile_register,
+                             base_address_on_device)
 
 
 class _Register(object):
@@ -288,8 +290,8 @@ class _Register(object):
         self._datatype = bitfile_register.datatype
         self._name = bitfile_register.name
         self._session = session
-        self._write_func = nifpga["Write%s" % self._datatype]
-        self._read_func = nifpga["Read%s" % self._datatype]
+        self.set_write_function_from_bitfile_reg(nifpga, bitfile_register)
+        self.set_read_function_from_bitfile_reg(nifpga, bitfile_register)
         self._ctype_type = self._datatype._return_ctype()
         self._resource = bitfile_register.offset + base_address_on_device
         if bitfile_register.access_may_timeout():
@@ -335,6 +337,16 @@ class _Register(object):
         indicator. """
         return self._datatype
 
+    def set_read_function_from_bitfile_reg(self, nifpga, bitfile_register):
+        """ Sets this registers read function based on the data type from the
+        bitfile."""
+        self._read_func = nifpga["Read%s" % bitfile_register.datatype]
+
+    def set_write_function_from_bitfile_reg(self, nifpga, bitfile_register):
+        """ Sets this registers read function based on the data type from the
+        bitfile."""
+        self._write_func = nifpga["Write%s" % bitfile_register.datatype]
+
 
 class _ArrayRegister(_Register):
     """
@@ -352,8 +364,6 @@ class _ArrayRegister(_Register):
                                              base_address_on_device)
         self._num_elements = len(bitfile_register)
         self._ctype_type = self._ctype_type * self._num_elements
-        self._write_func = nifpga["WriteArray%s" % self._datatype]
-        self._read_func = nifpga["ReadArray%s" % self._datatype]
 
     def __len__(self):
         """ Returns the length of the array.
@@ -387,9 +397,291 @@ class _ArrayRegister(_Register):
         Returns:
             (list): The data in the register in a python list.
         """
+
         buf = self._ctype_type()
         self._read_func(self._session, self._resource, buf, len(self))
         return [bool(elem) if self._datatype is DataType.Bool else elem for elem in buf]
+
+    def set_read_function_from_bitfile_reg(self, nifpga, bitfile_register):
+        """ Sets this registers read function based on the data type from the
+        bitfile."""
+        self._read_func = nifpga["ReadArray%s" % bitfile_register.datatype]
+
+    def set_write_function_from_bitfile_reg(self, nifpga, bitfile_register):
+        """ Sets this registers read function based on the data type from the
+        bitfile."""
+        self._write_func = nifpga["WriteArray%s" % bitfile_register.datatype]
+
+
+class _FxpRegister(_ArrayRegister):
+    def __init__(self,
+                 session,
+                 nifpga,
+                 bitfile_register,
+                 base_address_on_device):
+        super(_FxpRegister, self).__init__(session,
+                                           nifpga,
+                                           bitfile_register,
+                                           base_address_on_device)
+        self._word_length = bitfile_register.word_length
+        self._integer_word_length = bitfile_register.integer_word_length
+        self._radix_point = self._determine_radix_point(bitfile_register)
+
+        self._overflow_enabled = bitfile_register.overflow
+        self._signed = bitfile_register.signed
+        self._ctype_type = self._ctype_type * len(self)
+
+    def __len__(self):
+        """ Fixed point values are transfered to the driver as an array of U32
+        The length is between 1 and 3 determined by the word length (includes
+        the signed bit) plus the include_overflow_status_enable bit.
+        """
+        bits_required = self._word_length
+        if self._overflow_enabled:
+            """ If overflow status is enabled we need an extra bit. """
+            bits_required += 1
+
+        return bits_required // 32
+
+    @property
+    def overflow(self):
+        """ This property should only set be whenever this register has overflow
+        enabled"""
+        return self._overflow
+
+    def write(self, data):
+        """ Converts the fixed point data then
+
+            Args:
+                data (DataType.value): The data to be written into the
+                registers in
+        """
+        data = self._convert_data_to_binary_fxp(data)
+        super(_FxpRegister, self).write(data)
+
+    def read(self):
+        """ Reads the entire FXP number as an array U32 bits then combining
+        the array into a single a binary string. and the convert it into
+        Decimal format.
+
+        Returns:
+            data (DataType.value): The data in the register in a python list.
+        """
+        data = super(_FxpRegister, self).read()
+        binary_data = ''
+        for index in range(0, len(self)):
+            binary_data = binary_data + self._to_bin(data[index])
+        return self._convert_from_binary_to_decimal(binary_data)
+
+    def _convert_from_binary_to_decimal(self, binary_data):
+        """ This function will convert a """
+        sign = 1
+        if self._signed and self._get_signed_bit(binary_data) == '1':
+            binary_data = self._twos_compliment(binary_data)
+            sign = -1
+
+        fraction = self._get_fraction(binary_data)
+        integer = self._get_integer(binary_data)
+        if self._overflow_enabled:
+            self.overflow = self._get_overflow_bit(binary_data)
+        return sign * (integer + fraction)
+
+    def _convert_data_to_binary_fxp(self, data):
+        """ This function will convert a datatype (decimal, integer, float)
+        into a binary representation."""
+        # integer_binary = self._calculate_binary_integer_from_data(data)
+        """ Calculate the fractional in binary representation if the FXP has a
+        fractional component. else return the portion. """
+        binary = ''
+        if self._integer_word_length > self._word_length:
+            binary = self._calculate_binary_integer_from_data(data)
+            binary = binary[:self._word_length]
+        elif 0 > self._integer_word_length:
+            binary = self._calculate_binary_fraction_from_data(data)
+            binary = binary[len(binary)-self._word_length:]
+        else:
+            binary = self._calculate_binary_integer_from_data(data) + \
+                self._calculate_binary_fraction_from_data(Decimal(data % 1))
+
+        if self._signed and data < 0:
+            binary = self._twos_compliment(binary)
+        if self._overflow_enabled:
+            if self.overflow:
+                binary = '0' + binary
+            else:
+                binary = '1' + binary
+        return binary
+
+    def _twos_compliment(self, binary_string):
+        binary_string = self._flip_bits(binary_string)
+        binary_string = self._add_one_to_binary(binary_string)
+        return binary_string
+
+    def _flip_bits(self, binary_string):
+        temp_string = ''
+        for bit in binary_string:
+            if bit == '0':
+                temp_string += '1'
+            elif bit == '1':
+                temp_string += '0'
+        return temp_string
+
+    def _add_one_to_binary(self, binary_string):
+        temp_string = ''
+        carry = True
+        for bit in reversed(binary_string):
+            if bit == '0':
+                if carry:
+                    temp_string = '1' + temp_string
+                    carry = False
+                else:
+                    temp_string = '0' + temp_string
+            if bit == '1':
+                if carry:
+                    temp_string = '0' + temp_string
+                else:
+                    temp_string = '1' + temp_string
+        return temp_string
+
+    def _calculate_fxp_binary_integer_from_binary(self, data):
+        """
+        There a few special cases that we must consider during conversion to
+        binary.
+            1. If the binary representation of the input integer does not fill
+            the entire integer_word_length
+                    - Then we must pad extra zeros in front to reach the
+                    word_length.
+            2. If the binary representation input integer is to large for the
+            integer_word_length.
+                - Then we should round to the largest possible with the given
+                integer_word_length
+        If the binary representation does not fill entire word_length pad with
+        extra zeros.
+        """
+        integer_binary = self._to_bin(int(data // 1))
+        if (integer_binary == '0'):
+            return ''
+        if len(integer_binary) < self._integer_word_length:
+            num_of_leading_zeros = self._integer_word_length - len(integer_binary)
+            zero_padding = ''.zfill(num_of_leading_zeros)
+            integer_binary = zero_padding + integer_binary
+        elif len(integer_binary) > self._integer_word_length:
+            integer_binary = self._to_bin((2**(self._integer_word_length) - 1))
+            warn("The inputed value was not able to be converted to FXP " +
+                 "representation, without coercion.")
+        return integer_binary
+
+    def _calculate_binary_fraction_from_data(self, data):
+        """
+        There is not a built in way to convert from a fraction to a binary
+        representation, therefore this is a custom implementation for the
+        labVIEW FXP datatype.
+        """
+        fraction_data = Decimal(data % 1)
+        fraction_binary = ""
+        if self._integer_word_length < 0:
+            """ If self._integer_word_length is negative, then we expect there
+            to be leading zeros equal to the absolute value of the
+            self._integer_word_length. If the input data is too large we warn
+            the user and return highest possible value we can with this FXP
+            register.
+            This section of code also has another side effect as it sets up
+            the variable fraction_data to start obtaining the next
+            'significant' bits. """
+            fraction_data = fraction_data * 2**(abs(self._integer_word_length))
+            fraction_binary.zfill(abs(self._integer_word_length))
+            if fraction_data > 0:
+                warn("The inputed value was not able to be converted to FXP " +
+                     "representation, without coercion.")
+                fraction_binary += self._to_bin((2**(self._word_length) - 1))
+                return fraction_binary
+
+        for i in range(0, self._word_length - self._radix_point):
+            fraction_data = fraction_data * 2
+            if fraction_data >= 1:
+                fraction_binary += '1'
+                fraction_data = fraction_data % 1
+            else:
+                fraction_binary += '0'
+
+        if fraction_data != 0:
+            warn("The inputed value was not able to be converted to FXP " +
+                 "representation, without coercion.")
+
+    def _get_fraction(self, data):
+        """ Taking the entire binary string that represents """
+        starting_index = len(data) - self._radix_point
+        ending_index = len(data)
+        fractional_portion = data[starting_index: ending_index]
+        fraction = Decimal()
+        for exponent in range(0, self._radix_point):
+            if fractional_portion[exponent] == '1':
+                fraction += Decimal(2**(-(exponent+1)))
+            print("fraction: {}".format(fraction))
+        return fraction
+
+    def _get_integer(self, data):
+        """ get the binary representation of the word by shifting the right by
+        the radix value  to remove the fractional bits and the masking out
+        the remaining bits."""
+        mask = 0
+        zero_padding = 0
+        if self._integer_word_length >= self._word_length:
+            mask = (2**self._word_length) - 1
+            zero_padding = self._integer_word_length - self._word_length
+        else:
+            mask = (2**self._radix_point) - 1
+        # Shift the word to the right most position and mask any other bits
+        integer_bits = (data >> self._radix_point) & mask
+        # Return the integer after being shifted the correct number of bits
+        return integer_bits << zero_padding, 2
+
+    def _get_overflow_bit(self, data):
+        """ This function should be called only if """
+        mask = (2**self.word_length)
+        if data & mask > 0:
+            return True
+        else:
+            False
+
+    def _get_signed_bit(self, binary):
+        return binary[self._word_length - 1]
+
+    def _determine_radix_point(self, bitfile_reg):
+        """
+            The radix is the point that separates the bits between the word and
+        fractional parts if the number. word_length can be integers between 1
+        and 64, while the integer_word_length can be any integer between -1024
+        and 1024.
+            Meaning if the integer_word_length is equal or greater than
+        the word_length, the fixed point will have no fraction. Inversely,
+        if the integer_word_length is less than zero then the FXP is entirely
+        fractional.
+            This means we only have a non-zero radix if the the integer_word
+        """
+
+        if bitfile_reg.word_length >= bitfile_reg.integer_word_length > 0:
+            return bitfile_reg.integer_word_length
+        else:
+            return 0
+
+    def _to_bin(self, value):
+        """
+        This class uses the built in bin() function to do the conversion,
+        but we remove the leading '0b' or '-0b' identifier to keep the logic
+        simplified.
+        """
+        binary_representation = bin(value)
+        if binary_representation[0] == '-':
+            return binary_representation[3:]
+        else:
+            return binary_representation[2:]
+
+    def set_read_function_from_bitfile_reg(self, nifpga, bitfile_register):
+        self._read_func = nifpga["ReadArray%s" % DataType.U32]
+
+    def set_write_function_from_bitfile_reg(self, nifpga, bitfile_register):
+        self._read_func = nifpga["WriteArray%s" % DataType.U32]
 
 
 class _FIFO(object):

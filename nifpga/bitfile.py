@@ -28,7 +28,7 @@ class Bitfile(object):
         self._base_address_on_device = int(nifpga.find("BaseAddressOnDevice").text)
         self._registers = {}
         for reg_xml in tree.find("VI").find("RegisterList"):
-            reg = create_register(reg_xml)
+            reg = self.create_register(reg_xml)
             if reg.datatype is not None:
                 assert reg.name not in self._registers, \
                     "One or more registers have the same name '%s', this is not supported" % reg.name
@@ -71,15 +71,15 @@ class Bitfile(object):
         """
         return self._base_address_on_device
 
-    def create_register(xml):
+    def create_register(self, xml):
         register = Register(xml)
-        if (_is_register_fxp(register)):
+        if (self._is_register_fxp(register)):
             register = Fxp_Register(xml, register)
         return register
 
-    def _is_register_fxp(register):
-        return register.datatype is DataType.FXP
-            or register.datatype is Datatype.CFXP
+    def _is_register_fxp(self, register):
+        return register.datatype is DataType.FXP \
+            or register.datatype is DataType.CFXP
 
 
 class Register(object):
@@ -186,15 +186,36 @@ class Fxp_Register(Register):
     A fixed point control or indicator from the front panel of the top level
     FPGA VI.
     """
-    def __init__(self, xml, register):
-        _copy_values_from_register(register)
+    def __init__(self, reg_xml, register):
+        self._copy_values_from_register(register)
+        self._signed = True if reg_xml.find("Signed").text.lower() == 'true' else False
+        self._word_length = reg_xml.find("WordLength")
+        self._integer_word_length = reg_xml.find("IntegerWordLength")
+        self._overflow = True if reg_xml.find("IncludeOverflowStatus") == 'true' else False
 
-    def _copy_values_from_register(register):
+    def _copy_values_from_register(self, register):
         self._name = register.name
         self._offset = register.offset
+        self._datatype = register.datatype
         self._access_may_timeout = register.access_may_timeout()
         self._internal = register.is_internal()
         self._is_array = register.is_array()
+
+    @property
+    def signed(self):
+        return self._signed
+
+    @property
+    def word_length(self):
+        return self._word_length
+
+    @property
+    def integer_word_length(self):
+        return self._integer_word_length
+
+    @property
+    def overflow(self):
+        return self._overflow
 
 
 class Fifo(object):
