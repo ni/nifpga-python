@@ -78,8 +78,7 @@ class Bitfile(object):
         return register
 
     def _is_register_fxp(self, register):
-        return register.datatype is DataType.FXP \
-            or register.datatype is DataType.CFXP
+        return register.datatype is DataType.FXP
 
 
 class Register(object):

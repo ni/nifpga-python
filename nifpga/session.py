@@ -9,6 +9,7 @@ from .nifpga import (_SessionType, _IrqContextType, _NiFpga, DataType,
                      CLOSE_ATTRIBUTE_NO_RESET_IF_LAST_SESSION)
 from .bitfile import Bitfile, Fxp_Register
 from .status import InvalidSessionError
+from .fixedpointhelper import bin_to_int, to_bin, twos_compliment
 from collections import namedtuple
 import ctypes
 from builtins import bytes
@@ -423,10 +424,10 @@ class _FxpRegister(_ArrayRegister):
                                            nifpga,
                                            bitfile_register,
                                            base_address_on_device)
+
         self._word_length = bitfile_register.word_length
         self._integer_word_length = bitfile_register.integer_word_length
-        self._radix_point = self._determine_radix_point(bitfile_register)
-
+        self._radix_point = self._calculate_radix_point()
         self._overflow_enabled = bitfile_register.overflow
         self._signed = bitfile_register.signed
         self._ctype_type = self._ctype_type * len(self)
@@ -440,24 +441,16 @@ class _FxpRegister(_ArrayRegister):
         if self._overflow_enabled:
             """ If overflow status is enabled we need an extra bit. """
             bits_required += 1
-
-        return bits_required // 32
+        if bits_required >= 32:
+            return bits_required // 32
+        else:
+            return 1
 
     @property
     def overflow(self):
         """ This property should only set be whenever this register has overflow
         enabled"""
         return self._overflow
-
-    def write(self, data):
-        """ Converts the fixed point data then
-
-            Args:
-                data (DataType.value): The data to be written into the
-                registers in
-        """
-        data = self._convert_data_to_binary_fxp(data)
-        super(_FxpRegister, self).write(data)
 
     def read(self):
         """ Reads the entire FXP number as an array U32 bits then combining
@@ -470,21 +463,75 @@ class _FxpRegister(_ArrayRegister):
         data = super(_FxpRegister, self).read()
         binary_data = ''
         for index in range(0, len(self)):
-            binary_data = binary_data + self._to_bin(data[index])
+            binary_data = binary_data + to_bin(data[index])
         return self._convert_from_binary_to_decimal(binary_data)
 
     def _convert_from_binary_to_decimal(self, binary_data):
         """ This function will convert a """
+        if self._overflow_enabled:
+            self._overflow = self._get_overflow(binary_data)
+            binary_data = binary_data[1:]
+
         sign = 1
-        if self._signed and self._get_signed_bit(binary_data) == '1':
-            binary_data = self._twos_compliment(binary_data)
+        if self._get_signed_bit(binary_data) == '1':
+            binary_data = twos_compliment(binary_data)
             sign = -1
 
-        fraction = self._get_fraction(binary_data)
         integer = self._get_integer(binary_data)
-        if self._overflow_enabled:
-            self.overflow = self._get_overflow_bit(binary_data)
+        fraction = self._get_fraction(binary_data)
+
         return sign * (integer + fraction)
+
+    def _get_signed_bit(self, binary_data):
+        if self._signed:
+            return binary_data[0]
+        else:
+            return None
+
+    def _get_overflow(self, binary_data):
+        if self._overflow_enabled:
+            return True if binary_data[0] == '1' else False
+        else:
+            return None
+
+    def _get_integer(self, binary_data):
+        """ get the binary representation of the word by shifting the right by
+        the radix value  to remove the fractional bits and the masking out
+        the remaining bits."""
+        if self._integer_word_length == 0:
+            return 0
+        if self._integer_word_length >= self._word_length:
+            integer_portion = binary_data[:self._word_length]
+            zero_padding = ''.zfill(self._integer_word_length - self._word_length)
+            integer_portion += zero_padding
+        else:
+            integer_portion = binary_data[:self._integer_word_length]
+        return bin_to_int(integer_portion)
+
+    def _get_fraction(self, binary_data):
+        """ Taking the entire binary string that represents """
+        starting_exponent = 0
+        fractional_portion = binary_data[self._radix_point: len(binary_data)]
+
+        if self._integer_word_length < 0:
+            starting_exponent = abs(self._integer_word_length)
+            leading_zeros = starting_exponent + len(fractional_portion)
+            fractional_portion = fractional_portion.zfill(leading_zeros)
+        fraction = Decimal()
+        for exponent in range(starting_exponent, len(fractional_portion)):
+            if fractional_portion[exponent] == '1':
+                fraction += Decimal(2**(-(exponent+1)))
+        return fraction
+
+    def write(self, data):
+        """ Converts the fixed point data then
+
+            Args:
+                data (DataType.value): The data to be written into the
+                registers in
+        """
+        data = self._convert_data_to_binary_fxp(data)
+        super(_FxpRegister, self).write(data)
 
     def _convert_data_to_binary_fxp(self, data):
         """ This function will convert a datatype (decimal, integer, float)
@@ -504,44 +551,13 @@ class _FxpRegister(_ArrayRegister):
                 self._calculate_binary_fraction_from_data(Decimal(data % 1))
 
         if self._signed and data < 0:
-            binary = self._twos_compliment(binary)
+            binary = twos_compliment(binary)
         if self._overflow_enabled:
             if self.overflow:
                 binary = '0' + binary
             else:
                 binary = '1' + binary
         return binary
-
-    def _twos_compliment(self, binary_string):
-        binary_string = self._flip_bits(binary_string)
-        binary_string = self._add_one_to_binary(binary_string)
-        return binary_string
-
-    def _flip_bits(self, binary_string):
-        temp_string = ''
-        for bit in binary_string:
-            if bit == '0':
-                temp_string += '1'
-            elif bit == '1':
-                temp_string += '0'
-        return temp_string
-
-    def _add_one_to_binary(self, binary_string):
-        temp_string = ''
-        carry = True
-        for bit in reversed(binary_string):
-            if bit == '0':
-                if carry:
-                    temp_string = '1' + temp_string
-                    carry = False
-                else:
-                    temp_string = '0' + temp_string
-            if bit == '1':
-                if carry:
-                    temp_string = '0' + temp_string
-                else:
-                    temp_string = '1' + temp_string
-        return temp_string
 
     def _calculate_fxp_binary_integer_from_binary(self, data):
         """
@@ -558,7 +574,7 @@ class _FxpRegister(_ArrayRegister):
         If the binary representation does not fill entire word_length pad with
         extra zeros.
         """
-        integer_binary = self._to_bin(int(data // 1))
+        integer_binary = to_bin(int(data // 1))
         if (integer_binary == '0'):
             return ''
         if len(integer_binary) < self._integer_word_length:
@@ -566,7 +582,7 @@ class _FxpRegister(_ArrayRegister):
             zero_padding = ''.zfill(num_of_leading_zeros)
             integer_binary = zero_padding + integer_binary
         elif len(integer_binary) > self._integer_word_length:
-            integer_binary = self._to_bin((2**(self._integer_word_length) - 1))
+            integer_binary = to_bin((2**(self._integer_word_length) - 1))
             warn("The inputed value was not able to be converted to FXP " +
                  "representation, without coercion.")
         return integer_binary
@@ -593,7 +609,7 @@ class _FxpRegister(_ArrayRegister):
             if fraction_data > 0:
                 warn("The inputed value was not able to be converted to FXP " +
                      "representation, without coercion.")
-                fraction_binary += self._to_bin((2**(self._word_length) - 1))
+                fraction_binary += to_bin((2**(self._word_length) - 1))
                 return fraction_binary
 
         for i in range(0, self._word_length - self._radix_point):
@@ -608,46 +624,7 @@ class _FxpRegister(_ArrayRegister):
             warn("The inputed value was not able to be converted to FXP " +
                  "representation, without coercion.")
 
-    def _get_fraction(self, data):
-        """ Taking the entire binary string that represents """
-        starting_index = len(data) - self._radix_point
-        ending_index = len(data)
-        fractional_portion = data[starting_index: ending_index]
-        fraction = Decimal()
-        for exponent in range(0, self._radix_point):
-            if fractional_portion[exponent] == '1':
-                fraction += Decimal(2**(-(exponent+1)))
-            print("fraction: {}".format(fraction))
-        return fraction
-
-    def _get_integer(self, data):
-        """ get the binary representation of the word by shifting the right by
-        the radix value  to remove the fractional bits and the masking out
-        the remaining bits."""
-        mask = 0
-        zero_padding = 0
-        if self._integer_word_length >= self._word_length:
-            mask = (2**self._word_length) - 1
-            zero_padding = self._integer_word_length - self._word_length
-        else:
-            mask = (2**self._radix_point) - 1
-        # Shift the word to the right most position and mask any other bits
-        integer_bits = (data >> self._radix_point) & mask
-        # Return the integer after being shifted the correct number of bits
-        return integer_bits << zero_padding, 2
-
-    def _get_overflow_bit(self, data):
-        """ This function should be called only if """
-        mask = (2**self.word_length)
-        if data & mask > 0:
-            return True
-        else:
-            False
-
-    def _get_signed_bit(self, binary):
-        return binary[self._word_length - 1]
-
-    def _determine_radix_point(self, bitfile_reg):
+    def _calculate_radix_point(self):
         """
             The radix is the point that separates the bits between the word and
         fractional parts if the number. word_length can be integers between 1
@@ -660,28 +637,16 @@ class _FxpRegister(_ArrayRegister):
             This means we only have a non-zero radix if the the integer_word
         """
 
-        if bitfile_reg.word_length >= bitfile_reg.integer_word_length > 0:
-            return bitfile_reg.integer_word_length
+        if self._word_length >= self._integer_word_length > 0:
+            return self._integer_word_length
         else:
             return 0
-
-    def _to_bin(self, value):
-        """
-        This class uses the built in bin() function to do the conversion,
-        but we remove the leading '0b' or '-0b' identifier to keep the logic
-        simplified.
-        """
-        binary_representation = bin(value)
-        if binary_representation[0] == '-':
-            return binary_representation[3:]
-        else:
-            return binary_representation[2:]
 
     def set_read_function_from_bitfile_reg(self, nifpga, bitfile_register):
         self._read_func = nifpga["ReadArray%s" % DataType.U32]
 
     def set_write_function_from_bitfile_reg(self, nifpga, bitfile_register):
-        self._read_func = nifpga["WriteArray%s" % DataType.U32]
+        self._write_func = nifpga["WriteArray%s" % DataType.U32]
 
 
 class _FIFO(object):
