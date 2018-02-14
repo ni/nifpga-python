@@ -358,6 +358,13 @@ class _NiFpga(StatusCheckedLibrary):
                 named_argtypes=[
                     NamedArgtype("session", _SessionType),
                     NamedArgtype("state", ctypes.POINTER(ctypes.c_uint32)),
+                ]),
+            LibraryFunctionInfo(
+                pretty_name="CommitFifoConfiguration",
+                name_in_library="NiFpgaDll_CommitFifoConfiguration",
+                named_argtypes=[
+                    NamedArgtype("session", _SessionType),
+                    NamedArgtype("fifo", ctypes.c_uint32),
                 ])
         ]  # list of function_infos
 
@@ -446,14 +453,6 @@ class _NiFpga(StatusCheckedLibrary):
                     ]),
             ])  # end of library_function_infos.extend() call
 
-        library_function_infos.append(
-            LibraryFunctionInfo(
-                    pretty_name="CommitFifoConfiguration",
-                    name_in_library="NiFpgaDll_CommitFifoConfiguration",
-                    named_argtypes=[
-                        NamedArgtype("session", _SessionType),
-                        NamedArgtype("fifo", ctypes.c_uint32),
-                    ]))
         for fifoPropertyType in FifoPropertyType:
             type_ctype = fifoPropertyType._return_ctype()
             library_function_infos.extend([
