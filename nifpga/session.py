@@ -6,9 +6,9 @@ Copyright (c) 2017 National Instruments
 
 from .nifpga import (_SessionType, _IrqContextType, _NiFpga, DataType,
                      OPEN_ATTRIBUTE_NO_RUN, RUN_ATTRIBUTE_WAIT_UNTIL_DONE,
-                     CLOSE_ATTRIBUTE_NO_RESET_IF_LAST_SESSION, FifoPropertyType,
-                     FifoProperty, _fifo_properties_to_types, FlowControl,
-                     DmaBufferType, FpgaViState)
+                     CLOSE_ATTRIBUTE_NO_RESET_IF_LAST_SESSION, FifoProperty,
+                     _fifo_properties_to_types, FlowControl, DmaBufferType,
+                     FpgaViState)
 from .bitfile import Bitfile
 from .status import IrqTimeoutWarning, InvalidSessionError
 from collections import namedtuple
@@ -671,7 +671,6 @@ class _FIFO(object):
             raise TypeError("_dma_buffer_type must be set to a nifpga.DmaBufferType")
         self._set_fifo_property(FifoProperty.DmaBufferType, value.value)
 
-
     @property
     def _dma_buffer(self):
         return self._get_fifo_property(FifoProperty.DmaBuffer)
@@ -679,7 +678,6 @@ class _FIFO(object):
     @_dma_buffer.setter
     def _dma_buffer(self, value):
         self._set_fifo_property(FifoProperty.DmaBuffer, value)
-
 
     @property
     def flow_control(self):
