@@ -187,10 +187,12 @@ class Fxp_Register(Register):
     """
     def __init__(self, reg_xml, register):
         self._copy_values_from_register(register)
-        self._signed = True if reg_xml.find("Signed").text.lower() == 'true' else False
-        self._word_length = reg_xml.find("WordLength")
-        self._integer_word_length = reg_xml.find("IntegerWordLength")
-        self._overflow = True if reg_xml.find("IncludeOverflowStatus") == 'true' else False
+        datatype = reg_xml.find("Datatype")
+        fxp_xml = datatype.find("FXP")
+        self._signed = True if fxp_xml.find("Signed").text.lower() == 'true' else False
+        self._overflow = True if fxp_xml.find("IncludeOverflowStatus").text.lower() == 'true' else False
+        self._word_length = int(fxp_xml.find("WordLength").text)
+        self._integer_word_length = int(fxp_xml.find("IntegerWordLength").text)
 
     def _copy_values_from_register(self, register):
         self._name = register.name
