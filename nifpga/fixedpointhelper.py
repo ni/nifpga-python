@@ -17,8 +17,7 @@ def to_bin(value):
     else:
         return binary_representation[2:]
 
-
-def twos_compliment( binary_string):
+def twos_compliment(binary_string):
     binary_string = _flip_bits(binary_string)
     binary_string = _add_one_to_binary(binary_string)
     return binary_string

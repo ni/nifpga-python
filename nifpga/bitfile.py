@@ -2,6 +2,7 @@ import os
 import warnings
 import xml.etree.ElementTree as ElementTree
 from nifpga import DataType
+from math import ceil
 
 
 class Bitfile(object):
@@ -186,6 +187,7 @@ class Fxp_Register(Register):
     FPGA VI.
     """
     def __init__(self, reg_xml, register):
+
         self._copy_values_from_register(register)
         datatype = reg_xml.find("Datatype")
         fxp_xml = datatype.find("FXP")
@@ -200,7 +202,22 @@ class Fxp_Register(Register):
         self._datatype = register.datatype
         self._access_may_timeout = register.access_may_timeout()
         self._internal = register.is_internal()
+        self._num_elements = len(register)
         self._is_array = register.is_array()
+
+    def __len__(self):
+        """ Fixed point values are transfered to the driver as an array of U32
+        The length is between 1 and 3 determined by the word length (includes
+        the signed bit) plus the include_overflow_status_enable bit.
+        """
+        bits_required = self._word_length
+        if self._overflow:
+            """ If overflow status is enabled we need an extra bit. """
+            bits_required += 1
+        if bits_required >= 32:
+            return int(ceil(bits_required / 32.0))
+        else:
+            return 1
 
     @property
     def signed(self):
