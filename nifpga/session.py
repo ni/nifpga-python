@@ -10,7 +10,7 @@ from .nifpga import (_SessionType, _IrqContextType, _NiFpga, DataType,
                      _fifo_properties_to_types, FlowControl, DmaBufferType,
                      FpgaViState)
 from .bitfile import Bitfile
-from .status import IrqTimeoutWarning, InvalidSessionError
+from .status import InvalidSessionError
 from collections import namedtuple
 import ctypes
 from builtins import bytes
@@ -29,11 +29,11 @@ class Session(object):
     Example usage of FPGA configuration functions::
 
         with Session(bitfile="myBitfilePath.lvbitx", resource="RIO0") as session:
-            try: session.run()
-                except: FpgaAlreadyRunningWarning: pass
-                session.download()
-                session.abort()
-                session.reset()
+            session.run()
+            FpgaAlreadyRunningWarning: pass
+            session.download()
+            session.abort()
+            session.reset()
 
     Note:
         It is always recommended that you use a Session with a context manager
@@ -227,10 +227,6 @@ class Session(object):
                                     timeout_ms,
                                     irqs_asserted_bitmask,
                                     timed_out)
-        except IrqTimeoutWarning:
-            # We pass timed_out to the C API, so we can ignore this warning
-            # and just always return timed_out.
-            pass
         finally:
             self._nifpga.UnreserveIrqContext(self._session, context)
         irqs_asserted = [i for i in range(32) if irqs_asserted_bitmask.value & (1 << i)]
