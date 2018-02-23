@@ -7,7 +7,8 @@ Copyright (c) 2017 National Instruments
 from .nifpga import (_SessionType, _IrqContextType, _NiFpga, DataType,
                      OPEN_ATTRIBUTE_NO_RUN, RUN_ATTRIBUTE_WAIT_UNTIL_DONE,
                      CLOSE_ATTRIBUTE_NO_RESET_IF_LAST_SESSION)
-from .bitfile import Bitfile, Fxp_Register
+from .bitfile import (Bitfile, Fxp_Register, FifoProperty, FpgaViState,
+                      _fifo_properties_to_types, FlowControl, DmaBufferType)
 from .status import InvalidSessionError
 from .fixedpointhelper import to_bin, twos_compliment, warn_coerced_data
 from collections import namedtuple
@@ -169,6 +170,13 @@ class Session(object):
     def reset(self):
         """ Resets the FPGA VI. """
         self._nifpga.Reset(self._session)
+
+    @property
+    def fpga_vi_state(self):
+        """ Returns the current state of the FPGA VI. """
+        state = ctypes.c_uint32()
+        self._nifpga.GetFpgaViState(self._session, state)
+        return FpgaViState(state.value)
 
     def _irq_ordinals_to_bitmask(self, ordinals):
         bitmask = 0
@@ -865,6 +873,10 @@ class _FIFO(object):
         self._nifpga.GetPeerToPeerFifoEndpoint(self._session, self._number, endpoint)
         return endpoint.value
 
+    def commit_configuration(self):
+        """ Resolves and Commits property changes made to the FIFO. """
+        self._nifpga.CommitFifoConfiguration(self._session, self._number)
+
     @property
     def name(self):
         """ Property of a Fifo that contains its name. """
@@ -874,3 +886,97 @@ class _FIFO(object):
     def datatype(self):
         """ Property of a Fifo that contains its datatype. """
         return self._datatype
+
+    def _get_fifo_property(self, prop):
+        prop_type = _fifo_properties_to_types[prop]
+        value = (prop_type._return_ctype())(0)
+        value_pointer = ctypes.pointer(value)
+        self._nifpga['GetFifoProperty%s' % prop_type](self._session, self._number, prop.value, value_pointer)
+        return value.value
+
+    def _set_fifo_property(self, prop, value):
+        prop_type = _fifo_properties_to_types[prop]
+        self._nifpga['SetFifoProperty%s' % prop_type](self._session, self._number, prop.value, value)
+
+    @property
+    def buffer_allocation_granularity(self):
+        """ The allocation granularity of the host memory part of a DMA FIFO.
+
+        By default this will usually be a page size, which is optimal for most
+        devices.  This property can be used to customize it.
+        """
+        return self._get_fifo_property(FifoProperty.BufferAllocationGranularityElements)
+
+    @buffer_allocation_granularity.setter
+    def buffer_allocation_granularity(self, value):
+        self._set_fifo_property(FifoProperty.BufferAllocationGranularityElements, value)
+
+    @property
+    def buffer_size(self):
+        """ The size in elements of the Host Memory part of a DMA FIFO. """
+        return self._get_fifo_property(FifoProperty.BufferSizeElements)
+
+    @buffer_size.setter
+    def buffer_size(self, value):
+        self._set_fifo_property(FifoProperty.BufferSizeElements, value)
+
+    @property
+    def _mirror_size(self):
+        """ The amount of elements in the Host Memory part of the DMA FIFO that
+        mirror elements at the beginning.
+
+        The Host Memory part of a DMA FIFO is a circular buffer.  This means that
+        when we hit the end of the buffer we have to deal with the logic of wrapping
+        around the buffer.  Mirrored elements are elements at the beginning of
+        the buffer that are mapped twice in memory to the end of the buffer.
+        Settings this value can allow us to avoid wrap arounds.
+
+        This is mostly useful when using our Zero Copy API.  Its not yet
+        supported in Python though, so this property is private.
+        """
+        return self._get_fifo_property(FifoProperty.MirroredElements)
+
+    @_mirror_size.setter
+    def _mirror_size(self, value):
+        self._set_fifo_property(FifoProperty.MirroredElements, value)
+
+    @property
+    def _dma_buffer_type(self):
+        return self._get_fifo_property(FifoProperty.DmaBufferType)
+
+    @_dma_buffer_type.setter
+    def _dma_buffer_type(self, value):
+        if not isinstance(value, DmaBufferType):
+            raise TypeError("_dma_buffer_type must be set to a nifpga.DmaBufferType")
+        self._set_fifo_property(FifoProperty.DmaBufferType, value.value)
+
+    @property
+    def _dma_buffer(self):
+        return self._get_fifo_property(FifoProperty.DmaBuffer)
+
+    @_dma_buffer.setter
+    def _dma_buffer(self, value):
+        self._set_fifo_property(FifoProperty.DmaBuffer, value)
+
+    @property
+    def flow_control(self):
+        """ Controls whether the FPGA will wait for the host when using FIFOs.
+
+        If flow control is disabled, the FPGA will have free reign to read or
+        write elements before the host is ready.  This means the FIFO no longer
+        acts in a First In First Out manner.
+
+        For Host To Target FIFOs, this feature is useful when you want to put
+        something like a waveform in a FIFO and let the FPGA continue reading
+        that waveform over and over without any involvement from the host.
+
+        For Target To Host FIFOs, this feature is useful when you only care
+        about the latest data and don't care about old data.
+        """
+        return self._get_fifo_property(FifoProperty.FlowControl)
+
+    @flow_control.setter
+    def flow_control(self, value):
+        if not isinstance(value, FlowControl):
+            raise TypeError("flow_control must be set to an nifpga.FlowControl")
+        self._set_fifo_property(FifoProperty.FlowControl, value.value)

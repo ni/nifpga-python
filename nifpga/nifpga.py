@@ -50,6 +50,95 @@ class DataType(Enum):
         return _datatype_ctype[self]
 
 
+class FifoPropertyType(Enum):
+    """ Types of FIFO Properties, intended to abstract away the C Type. """
+    I32 = 1
+    U32 = 2
+    I64 = 3
+    U64 = 4
+    Ptr = 5
+
+    def __str__(self):
+        return self.name
+
+    def _return_ctype(self):
+        """ Returns the associated ctype of a given property type. """
+        _propertyType_ctype = {
+            FifoPropertyType.I32: ctypes.c_int32,
+            FifoPropertyType.U32: ctypes.c_uint32,
+            FifoPropertyType.I64: ctypes.c_int64,
+            FifoPropertyType.U64: ctypes.c_uint64,
+            FifoPropertyType.Ptr: ctypes.c_void_p
+        }
+        return _propertyType_ctype[self]
+
+
+class FifoProperty(Enum):
+    BytesPerElement = 1  # U32
+    BufferAllocationGranularityElements = 2  # U32
+    BufferSizeElements = 3  # U64
+    MirroredElements = 4  # U64
+    DmaBufferType = 5  # I32
+    DmaBuffer = 6  # Ptr
+    FlowControl = 7  # I32
+
+    def __str__(self):
+        return self.name
+
+
+class FlowControl(Enum):
+    """ When flow control is disabled, the FIFO no longer acts like a FIFO.
+    The FIFO will overwrite data in this mode. The FPGA fully controls when
+    data transfers. This can be useful when regenerating a waveform or when
+    you only care about the most recent data.
+    For Host to Target FIFOs, this only disables flow control when the entire FIFO
+    has been written once.
+    For Target to Host FIFOs, flow control is disabled on start and the FPGA can
+    begin writing then.
+    """
+    DisableFlowControl = 1
+    """ Default FIFO behavior. No data is lost, data only moves when there is
+    room for it.
+    """
+    EnableFlowControl = 2
+
+
+class DmaBufferType(Enum):
+    """ Allocated by RIO means the driver take the other properties and create
+    a buffer that meets their requirements.
+    """
+    AllocatedByRIO = 1
+    """ Allocated by User means you will allocate a buffer and set the DMA Buffer
+    property with your buffer. The driver will then use this buffer as the
+    underlying host memory in the FIFO.
+    """
+    AllocatedByUser = 2
+
+
+_fifo_properties_to_types = {
+    FifoProperty.BytesPerElement: FifoPropertyType.U32,
+    FifoProperty.BufferAllocationGranularityElements: FifoPropertyType.U32,
+    FifoProperty.BufferSizeElements: FifoPropertyType.U64,
+    FifoProperty.MirroredElements: FifoPropertyType.U64,
+    FifoProperty.DmaBufferType: FifoPropertyType.I32,
+    FifoProperty.DmaBuffer: FifoPropertyType.Ptr,
+    FifoProperty.FlowControl: FifoPropertyType.I32,
+}
+
+
+class FpgaViState(Enum):
+    """ The FPGA VI has either been downloaded and not run, or the VI was aborted
+    or reset. """
+    NotRunning = 0
+    """ An error has occurred. """
+    Invalid = 1
+    """ The FPGA VI is currently executing. """
+    Running = 2
+    """ The FPGA VI stopped normally.  This indicates it was not aborted or reset,
+    but instead reached the end of any loops it was executing and ended. """
+    NaturallyStopped = 3
+
+
 _SessionType = ctypes.c_uint32
 _IrqContextType = ctypes.c_void_p
 
@@ -246,6 +335,38 @@ class _NiFpga(StatusCheckedLibrary):
                     NamedArgtype("inBufferSize", ctypes.c_size_t),
                     NamedArgtype("outBuffer", ctypes.c_void_p),
                     NamedArgtype("outBufferSize", ctypes.c_size_t),
+                ]),
+            LibraryFunctionInfo(
+                pretty_name="FindRegisterPrivate",
+                name_in_library="NiFpgaDll_FindRegisterPrivate",
+                named_argtypes=[
+                    NamedArgtype("session", _SessionType),
+                    NamedArgtype("name", ctypes.c_char_p),
+                    NamedArgtype("expectedType", ctypes.c_uint32),
+                    NamedArgtype("offset", ctypes.POINTER(ctypes.c_uint32)),
+                ]),
+            LibraryFunctionInfo(
+                pretty_name="FindFifoPrivate",
+                name_in_library="NiFpgaDll_FindFifoPrivate",
+                named_argtypes=[
+                    NamedArgtype("session", _SessionType),
+                    NamedArgtype("name", ctypes.c_char_p),
+                    NamedArgtype("expectedType", ctypes.c_uint32),
+                    NamedArgtype("fifoNumber", ctypes.POINTER(ctypes.c_uint32)),
+                ]),
+            LibraryFunctionInfo(
+                pretty_name="GetFpgaViState",
+                name_in_library="NiFpgaDll_GetFpgaViState",
+                named_argtypes=[
+                    NamedArgtype("session", _SessionType),
+                    NamedArgtype("state", ctypes.POINTER(ctypes.c_uint32)),
+                ]),
+            LibraryFunctionInfo(
+                pretty_name="CommitFifoConfiguration",
+                name_in_library="NiFpgaDll_CommitFifoConfiguration",
+                named_argtypes=[
+                    NamedArgtype("session", _SessionType),
+                    NamedArgtype("fifo", ctypes.c_uint32),
                 ])
         ]  # list of function_infos
 
@@ -334,6 +455,29 @@ class _NiFpga(StatusCheckedLibrary):
                             NamedArgtype("elements remaining", ctypes.POINTER(ctypes.c_size_t)),
                         ]),
                 ])  # end of library_function_infos.extend() call
+        for fifoPropertyType in FifoPropertyType:
+            type_ctype = fifoPropertyType._return_ctype()
+            library_function_infos.extend([
+                LibraryFunctionInfo(
+                    pretty_name="GetFifoProperty%s" % fifoPropertyType,
+                    name_in_library="NiFpgaDll_GetFifoProperty%s" % fifoPropertyType,
+                    named_argtypes=[
+                        NamedArgtype("session", _SessionType),
+                        NamedArgtype("fifo", ctypes.c_uint32),
+                        NamedArgtype("property", ctypes.c_uint32),
+                        NamedArgtype("value", ctypes.POINTER(type_ctype)),
+                    ]),
+                LibraryFunctionInfo(
+                    pretty_name="SetFifoProperty%s" % fifoPropertyType,
+                    name_in_library="NiFpgaDll_SetFifoProperty%s" % fifoPropertyType,
+                    named_argtypes=[
+                        NamedArgtype("session", _SessionType),
+                        NamedArgtype("fifo", ctypes.c_uint32),
+                        NamedArgtype("property", ctypes.c_uint32),
+                        NamedArgtype("value", type_ctype),
+                    ]),
+            ])
+
         try:
             super(_NiFpga, self).__init__(library_name="NiFpga",
                                           library_function_infos=library_function_infos)
