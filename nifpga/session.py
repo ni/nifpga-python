@@ -495,7 +495,9 @@ class _FxpRegister(_ArrayRegister):
         return combinedData
 
     def _convert_from_read_value_to_decimal(self, data):
-        """ Input data assumes"""
+        """ This function converts read value from a RIO device and sets
+        the overflow bit if enabled and returns a Decimal representation of
+        the fixed point. """
         if self._overflow_enabled:
             self.overflow = self._get_overflow_value(data)
             data = self._remove_overflow_bit(data)
@@ -523,11 +525,17 @@ class _FxpRegister(_ArrayRegister):
         return data
 
     def write(self, data):
-        """ Converts the fixed point data then
+        """ Converts the passed in argument into fixed point representation
+        and then writes it into the register.
 
             Args:
-                data (DataType.value): The data to be written into the
-                registers in
+                data (most python datatypes): The data to be written into the
+                register. This method will coerce the value to the nearest
+                possible fixed point representation.
+
+                self.overflow: Registers with overflow enabled will write the
+                value of the attribute into the register. Users should set this
+                attribute on the the register before calling write.
         """
         binary = self._convert_data_to_binary_fxp(data)
         arrayData = []
