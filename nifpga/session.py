@@ -491,7 +491,7 @@ class _FxpRegister(_ArrayRegister):
         if len(self) > 1:
             overflow_bit = 1 if self._overflow_enabled else 0
             total_num_bits = self._word_length + overflow_bit
-            combinedData = combinedData >> (32*len(self) - total_num_bits)
+            combinedData = combinedData >> (32 * len(self) - total_num_bits)
         return combinedData
 
     def _convert_from_read_value_to_decimal(self, data):
@@ -549,7 +549,7 @@ class _FxpRegister(_ArrayRegister):
             binary = binary[:self._word_length]
         elif self._integer_word_length < 0:
             binary = self._calculate_binary_fraction_from_data(data)
-            binary = binary[len(binary)-self._word_length:]
+            binary = binary[len(binary) - self._word_length:]
         else:
             interger_part = self._calculate_binary_integer_from_data(data)
             fractional_part = self._calculate_binary_fraction_from_data(data)

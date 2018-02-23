@@ -29,6 +29,7 @@ class MockFxpRegister(_FxpRegister):
         self._internal = False  # Cant be internal
         self._is_array = False  # This mock is always a single FXP
 
+
 """ These are a couple of arbitrary binary strings that the following unit
 to test a non random value.
 """
@@ -254,9 +255,8 @@ class FXPRegister32bitWord16bitIntegerOverflow(unittest.TestCase):
                                             integer_word_length=16)
 
     def test_converting_binary_into_decimal(self):
-
-        #'(1) 0100010110010010.0011000100001100'
-        """ The expected value should be equal to
+        """ binary String '(1) 0100010110010010.0011000100001100'
+        The expected value should be equal to
         2^(1) + 2^(4) + 2^(7) + 2^(8) + 2^(10) + 2^(14) +
         2^(-3) + 2^(-4) + 2^(-8) + 2^(-13) + 2^(-14)
         """
@@ -303,9 +303,9 @@ class FXPRegister16bitWordNegative100bitInteger(unittest.TestCase):
                                             enableOverflowStatus=False,
                                             word_length=16,
                                             integer_word_length=-100)
-        self.decimal_value = Decimal(2**(-101) + 2**(-102) + 2**(-103)
-                                     + 2**(-106) + 2**(-109) + 2**(-112)
-                                     + 2**(-114) + 2**(-115))
+        self.decimal_value = Decimal(2**(-101) + 2**(-102) + 2**(-103) +
+                                     2**(-106) + 2**(-109) + 2**(-112) +
+                                     2**(-114) + 2**(-115))
 
     def test_converting_binary_into_decimal(self):
         value = int(binary_string_16bit, 2)
