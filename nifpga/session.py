@@ -9,13 +9,12 @@ from .nifpga import (_SessionType, _IrqContextType, _NiFpga, DataType,
                      CLOSE_ATTRIBUTE_NO_RESET_IF_LAST_SESSION)
 from .bitfile import Bitfile, Fxp_Register
 from .status import InvalidSessionError
-from .fixedpointhelper import bin_to_int, to_bin, twos_compliment
+from .fixedpointhelper import to_bin, twos_compliment, warn_coerced_data
 from collections import namedtuple
 import ctypes
 from builtins import bytes
-from decimal import Decimal
+from decimal import Decimal, ROUND_DOWN
 from future.utils import iteritems
-from math import ceil
 from warnings import warn
 
 
@@ -405,7 +404,6 @@ class _ArrayRegister(_Register):
         read_func = self._get_read_function()
         read_func(self._session, self._resource, buf, len(self))
         val = [bool(elem) if self._datatype is DataType.Bool else elem for elem in buf]
-        print("return val {}".format(val))
         return val
 
     def _get_read_function(self):
@@ -467,32 +465,37 @@ class _FxpRegister(_ArrayRegister):
 
     @overflow.setter
     def overflow(self, value):
-        self._overflow = value
+        if self._overflow_enabled:
+            self._overflow = value
 
     def _calculate_delta(self, word_length, integer_word_length):
         return 2**(integer_word_length - word_length)
 
     def read(self):
         """ Reads the entire FXP number as an array U32 bits then combining
-        the array into a single a binary string. and the convert it into
-        Decimal format.
+        the array bits into a single datatype, then convert it into python
+        Decimal. The largest expecting transfer would be a 64 bit fixed point
+        with the overflow status enabled (making an array of length 3).
 
         Returns:
             data (DataType.value): The data in the register in a python list.
         """
         data = super(_FxpRegister, self).read()
-        print("this is the data we read{}".format(data))
+        data = self._combine_array_of_u32_into_one_value(data)
+        return self._convert_from_read_value_to_decimal(data)
+
+    def _combine_array_of_u32_into_one_value(self, data):
         combinedData = 0
         for index in range(0, len(self)):
             combinedData = (combinedData << 32 * index) + data[index]
-        print("combinedData {}".format(combinedData))
         if len(self) > 1:
-            total_significant_bits = self._word_length + 1 if self._overflow_enabled else 0
-            combinedData = combinedData >> (32*len(self) - total_significant_bits)
-            print("combinedData after trimming {}".format(combinedData))
-        return self._convert_from_read_value_to_decimal(combinedData)
+            overflow_bit = 1 if self._overflow_enabled else 0
+            total_num_bits = self._word_length + overflow_bit
+            combinedData = combinedData >> (32*len(self) - total_num_bits)
+        return combinedData
 
     def _convert_from_read_value_to_decimal(self, data):
+        """ Input data assumes"""
         if self._overflow_enabled:
             self.overflow = self._get_overflow_value(data)
             data = self._remove_overflow_bit(data)
@@ -501,12 +504,17 @@ class _FxpRegister(_ArrayRegister):
         return Decimal(data * self._delta)
 
     def _get_overflow_value(self, data):
+        """ Mask out all the data within the word length, leaving the overflow
+        bit. If the result after masking the the word portion of the fixed
+        point is none zero that indicates the data read has overflown."""
         mask = 2**(self._word_length)
         if data & mask > 0:
             return True
         return False
 
     def _remove_overflow_bit(self, data):
+        """ This helper function masks out all bits not inside the word length,
+        ultimately returning a value of data missing the overflow bit. """
         return data & (2**(self._word_length) - 1)
 
     def _integer_twos_comp(self, data):
@@ -522,50 +530,54 @@ class _FxpRegister(_ArrayRegister):
                 registers in
         """
         binary = self._convert_data_to_binary_fxp(data)
-        print("binary writing: {}".format(binary))
         arrayData = []
         for index in range(0, len(self)):
             blocksize = 32 * index
-            arrayData.append(int(binary[0 + blocksize: 31 + blocksize], 2))
-        print("arrayData {}".format(arrayData))
+            arrayData.append(int(binary[0 + blocksize: 32 + blocksize], 2))
         super(_FxpRegister, self).write(arrayData)
 
     def _convert_data_to_binary_fxp(self, data):
-        """ This function will convert a datatype (decimal, integer, float)
-        into a binary representation."""
-        """ Calculate the fractional in binary representation if the FXP has a
-        fractional component. else return the portion. """
+        """ This function will convert any python datatype (decimal, integer
+        , float) into a binary that can be written to the RIO device the same
+        way a LabVIEW Host interface would."""
         binary = ''
         if not self._signed and data < 0:
             binary = ''.zfill(self._word_length)
-            warn("The inputed value was not able to be converted to FXP, without coercion. ")
-        elif self._integer_word_length > self._word_length:
+            warn_coerced_data()
+        elif self._integer_word_length >= self._word_length:
             binary = self._calculate_binary_integer_from_data(data)
             binary = binary[:self._word_length]
-        elif 0 > self._integer_word_length:
-            binary = self._calculate_binary_integer_from_data(data)
+        elif self._integer_word_length < 0:
+            binary = self._calculate_binary_fraction_from_data(data)
             binary = binary[len(binary)-self._word_length:]
         else:
-            binary = self._calculate_binary_integer_from_data(data) + \
-                self._calculate_binary_fraction_from_data(data)
+            interger_part = self._calculate_binary_integer_from_data(data)
+            fractional_part = self._calculate_binary_fraction_from_data(data)
+            binary = interger_part + fractional_part
 
         if self._signed and data < 0:
             binary = twos_compliment(binary)
         if self._overflow_enabled:
+            self._check_overflow_attribute_is_set()
             if self.overflow:
                 binary = '1' + binary
             else:
                 binary = '0' + binary
         return binary
 
+    def _check_overflow_attribute_is_set(self):
+        if not hasattr(self, "overflow"):
+            warn("Attempting to write without the overflow bit set, defaulting to False")
+            self.overflow = False
+
     def _calculate_binary_integer_from_data(self, data):
         """
-        There a few special cases that we must consider during conversion to
+        There a few special cases that are to be considered converting to
         binary.
             1. If the binary representation of the input integer does not fill
             the entire integer_word_length
-                    - Then we must pad extra zeros in front to reach the
-                    word_length.
+                - Then we must pad extra zeros in front to reach the
+                word_length.
             2. If the binary representation input integer is to large for the
             integer_word_length.
                 - Then we should round to the largest possible with the given
@@ -573,14 +585,16 @@ class _FxpRegister(_ArrayRegister):
         If the binary representation does not fill entire word_length pad with
         extra zeros.
         """
-        integer_binary = to_bin(int(data // 1))
+        data_int = int(Decimal(data).to_integral_exact(rounding=ROUND_DOWN))
+        integer_binary = to_bin(data_int)
+
         if (integer_binary == '0'):
             return ''
         if len(integer_binary) < self._integer_word_length:
             integer_binary = integer_binary.zfill(self._integer_word_length)
         elif len(integer_binary) > self._integer_word_length:
             integer_binary = to_bin((2**(self._integer_word_length) - 1))
-            warn("The inputed value was not able to be converted to FXP, without coercion. ")
+            warn_coerced_data()
         return integer_binary
 
     def _calculate_binary_fraction_from_data(self, data):
@@ -589,10 +603,11 @@ class _FxpRegister(_ArrayRegister):
         representation, therefore this is a custom implementation for the
         labVIEW FXP datatype.
         """
-        fraction_data = Decimal(data % 1)
+        fraction_data = Decimal(abs(data) % 1)
         fraction_binary = ""
         if self._integer_word_length < 0:
-            """ If self._integer_word_length is negative, then we expect there
+            """ If the fixed point is entirely fractional
+            (self._integer_word_length is negative), then we expect there
             to be leading zeros equal to the absolute value of the
             self._integer_word_length. If the input data is too large we warn
             the user and return highest possible value we can with this FXP
@@ -601,9 +616,9 @@ class _FxpRegister(_ArrayRegister):
             the variable fraction_data to start obtaining the next
             'significant' bits. """
             fraction_data = fraction_data * 2**(abs(self._integer_word_length))
-            fraction_binary.zfill(abs(self._integer_word_length))
-            if fraction_data > 0:
-                warn("The inputed value was not able to be converted to FXP, without coercion. ")
+            fraction_binary = fraction_binary.zfill(abs(self._integer_word_length))
+            if fraction_data > 1:
+                warn_coerced_data()
                 fraction_binary += to_bin((2**(self._word_length) - 1))
                 return fraction_binary
 
@@ -611,25 +626,27 @@ class _FxpRegister(_ArrayRegister):
             fraction_data = fraction_data * 2
             if fraction_data >= 1:
                 fraction_binary += '1'
-                fraction_data = fraction_data % 1
+                fraction_data = Decimal(fraction_data % 1)
             else:
                 fraction_binary += '0'
 
         if fraction_data != 0:
-            warn("The inputed value was not able to be converted to FXP, without coercion. ")
+            warn_coerced_data()
         return fraction_binary
 
     def _calculate_radix_point(self):
         """
             The radix is the point that separates the bits between the word and
-        fractional parts if the number. word_length can be integers between 1
-        and 64, while the integer_word_length can be any integer between -1024
-        and 1024.
+        fractional parts if the number.The word_length can be an integer
+        between 1  and 64, while the integer_word_length can be any integer
+        between -1024 and 1024.
             Meaning if the integer_word_length is equal or greater than
         the word_length, the fixed point will have no fraction. Inversely,
         if the integer_word_length is less than zero then the FXP is entirely
         fractional.
-            This means we only have a non-zero radix if the the integer_word
+            This means we only have a non-zero radix (FXP includes both
+        integer and fractional portions) if the the integer_word is within the
+        bounds of the word_length.
         """
 
         if self._word_length >= self._integer_word_length > 0:

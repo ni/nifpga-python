@@ -1,3 +1,6 @@
+from warnings import warn
+
+
 def bin_to_int(binary_string):
     if binary_string == '':
         return 0
@@ -16,6 +19,7 @@ def to_bin(value):
         return binary_representation[3:]
     else:
         return binary_representation[2:]
+
 
 def twos_compliment(binary_string):
     binary_string = _flip_bits(binary_string)
@@ -49,3 +53,7 @@ def _add_one_to_binary(binary_string):
             else:
                 temp_string = '1' + temp_string
     return temp_string
+
+
+def warn_coerced_data():
+    warn("The inputed value was not able to be converted to FXP, without coercion. ")
