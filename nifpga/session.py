@@ -6,9 +6,10 @@ Copyright (c) 2017 National Instruments
 
 from .nifpga import (_SessionType, _IrqContextType, _NiFpga, DataType,
                      OPEN_ATTRIBUTE_NO_RUN, RUN_ATTRIBUTE_WAIT_UNTIL_DONE,
-                     CLOSE_ATTRIBUTE_NO_RESET_IF_LAST_SESSION)
-from .bitfile import (Bitfile, Fxp_Register, FifoProperty, FpgaViState,
-                      _fifo_properties_to_types, FlowControl, DmaBufferType)
+                     CLOSE_ATTRIBUTE_NO_RESET_IF_LAST_SESSION, FifoProperty,
+                     _fifo_properties_to_types, FlowControl, DmaBufferType,
+                     FpgaViState)
+from .bitfile import Bitfile, Fxp_Register
 from .status import InvalidSessionError
 from .fixedpointhelper import to_bin, twos_compliment, warn_coerced_data
 from collections import namedtuple
