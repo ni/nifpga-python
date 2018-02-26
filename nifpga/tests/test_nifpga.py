@@ -186,7 +186,7 @@ class StatusCheckedLibraryTestFunctionDoesntExist(unittest.TestCase):
     """
     New versions of NiFpga will have new functions.  We want the API to support
     old versions of NiFpga without erroring because it can't find certain symbols.
-    So StatusCheckedLibrary will return FeatureNotSupported for symbols it can't
+    So StatusCheckedLibrary will return VersionMismatchError for symbols it can't
     find.
     """
     def setUp(self):

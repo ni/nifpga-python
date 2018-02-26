@@ -538,7 +538,7 @@ class _FxpRegister(_ArrayRegister):
         and then writes it into the register.
 
             Args:
-                data (most python datatypes): The data to be written into the
+                data (any python datatype): The data to be written into the
                 register. This method will coerce the value to the nearest
                 possible fixed point representation.
 
@@ -554,8 +554,8 @@ class _FxpRegister(_ArrayRegister):
         super(_FxpRegister, self).write(arrayData)
 
     def _convert_data_to_binary_fxp(self, data):
-        """ This function will convert any python datatype (decimal, integer
-        , float) into a binary that can be written to the RIO device the same
+        """ This function will convert any python datatype (decimal, integer,
+         float) into a binary that can be written to the RIO device the same
         way a LabVIEW Host interface would."""
         binary = ''
         if not self._signed and data < 0:
