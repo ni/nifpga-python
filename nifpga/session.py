@@ -11,11 +11,10 @@ from .nifpga import (_SessionType, _IrqContextType, _NiFpga, DataType,
                      FpgaViState)
 from .bitfile import Bitfile, Fxp_Register
 from .status import InvalidSessionError
-from .fixedpointhelper import to_bin, twos_compliment, warn_coerced_data
 from collections import namedtuple
 import ctypes
 from builtins import bytes
-from decimal import Decimal, ROUND_DOWN
+from decimal import Decimal
 from future.utils import iteritems
 from warnings import warn
 
@@ -460,11 +459,11 @@ class _FxpRegister(_ArrayRegister):
 
         self._word_length = bitfile_register.word_length
         self._integer_word_length = bitfile_register.integer_word_length
-        self._radix_point = self._calculate_radix_point()
         self._overflow_enabled = bitfile_register.overflow
         self._signed = bitfile_register.signed
-        self._delta = self._calculate_delta(bitfile_register.word_length,
-                                            bitfile_register.integer_word_length)
+        self._delta = self._calculate_delta()
+        self._minimum = self._calculate_minimum()
+        self._maximum = self._calculate_maximum()
 
     @property
     def overflow(self):
@@ -477,8 +476,31 @@ class _FxpRegister(_ArrayRegister):
         if self._overflow_enabled:
             self._overflow = value
 
-    def _calculate_delta(self, word_length, integer_word_length):
-        return 2**(integer_word_length - word_length)
+    def _calculate_delta(self):
+        """ The value represented in the bitfile for delta is not always
+        correct, therefore we must calculate it ourselves.
+        """
+        return 2**(self._integer_word_length - self._word_length)
+
+    def _calculate_maximum(self):
+        """ The value represented in the bitfile for the maximum FXP value is
+        not always correct, therefore we must calculate it ourselves.
+        """
+        if self._signed:
+            magnitude_bits = self._word_length - 1
+        else:
+            magnitude_bits = self._word_length
+        return (2**(magnitude_bits) - 1) * self._delta
+
+    def _calculate_minimum(self):
+        """ The value represented in the bitfile for the minimum FXP value is
+        not always correct, therefore we must calculate it ourselves.
+        """
+        if self._signed:
+            magnitude_bits = self._word_length - 1
+            return -1 * ((2**(magnitude_bits)) * self._delta)
+        else:
+            return 0
 
     def read(self):
         """ Reads the entire FXP number as an array U32 bits then combining
@@ -530,7 +552,9 @@ class _FxpRegister(_ArrayRegister):
 
     def _integer_twos_comp(self, data):
         if (data & (1 << (self._word_length - 1))) != 0:
-            data = data - (1 << self._word_length)
+            data = data ^ (2 ** (self._word_length) - 1)
+            data += 1
+            data *= -1
         return data
 
     def write(self, data):
@@ -546,130 +570,59 @@ class _FxpRegister(_ArrayRegister):
                 value of the attribute into the register. Users should set this
                 attribute on the the register before calling write.
         """
-        binary = self._convert_data_to_binary_fxp(data)
-        arrayData = []
-        for index in range(0, len(self)):
-            blocksize = 32 * index
-            arrayData.append(int(binary[0 + blocksize: 32 + blocksize], 2))
+
+        #binary = self._convert_data_to_binary_fxp(data)
+        fxp_representation = self._convert_written_value_to_fxp_representation(data)
+        arrayData = self._extract_array_of_u32_from_one_intger(fxp_representation)
         super(_FxpRegister, self).write(arrayData)
 
-    def _convert_data_to_binary_fxp(self, data):
-        """ This function will convert any python datatype (decimal, integer,
-         float) into a binary that can be written to the RIO device the same
-        way a LabVIEW Host interface would."""
-        binary = ''
-        if not self._signed and data < 0:
-            binary = ''.zfill(self._word_length)
-            warn_coerced_data()
-        elif self._integer_word_length >= self._word_length:
-            binary = self._calculate_binary_integer_from_data(data)
-            binary = binary[:self._word_length]
-        elif self._integer_word_length < 0:
-            binary = self._calculate_binary_fraction_from_data(data)
-            binary = binary[len(binary) - self._word_length:]
+    def _convert_written_value_to_fxp_representation(self, data):
+        """ """
+        fxp_representation = 0
+        if data < self._minimum:
+            fxp_representation = self._convert_value_to_fxp(self._minimum)
+            self.warn_coerced_data()
+        elif data > self._maximum:
+            fxp_representation = self._convert_value_to_fxp(self._maximum)
+            self.warn_coerced_data()
         else:
-            interger_part = self._calculate_binary_integer_from_data(data)
-            fractional_part = self._calculate_binary_fraction_from_data(data)
-            binary = interger_part + fractional_part
+            fxp_representation = self._convert_value_to_fxp(data)
 
         if self._signed and data < 0:
-            binary = twos_compliment(binary)
+            fxp_representation = self._integer_twos_comp(fxp_representation)
+
         if self._overflow_enabled:
             self._check_overflow_attribute_is_set()
             if self.overflow:
-                binary = '1' + binary
-            else:
-                binary = '0' + binary
-        return binary
+                fxp_representation += 2**(self._word_length)
+        return fxp_representation
+
+    def _convert_value_to_fxp(self, data):
+        calculated_fxp = Decimal(data) / Decimal(self._delta)
+        fxp_representation = int(calculated_fxp)
+        """ If the result of the division is not an integer we lost some of
+        the input data warn the user that we had to coerce the value to the
+        nearest fixed point representation. """
+        if fxp_representation != calculated_fxp:
+            self.warn_coerced_data()
+        return fxp_representation
+
+    def _extract_array_of_u32_from_one_intger(self, data):
+        mask_32bit = (2**32) - 1
+        extracted_array = []
+        for index in range(0, len(self)):
+            extracted_array.append(data & mask_32bit)
+            data = data >> 32
+        extracted_array.reverse()
+        return extracted_array
 
     def _check_overflow_attribute_is_set(self):
         if not hasattr(self, "overflow"):
             warn("Attempting to write without the overflow bit set, defaulting to False")
             self.overflow = False
 
-    def _calculate_binary_integer_from_data(self, data):
-        """
-        There a few special cases that are to be considered converting to
-        binary.
-            1. If the binary representation of the input integer does not fill
-            the entire integer_word_length
-                - Then we must pad extra zeros in front to reach the
-                word_length.
-            2. If the binary representation input integer is to large for the
-            integer_word_length.
-                - Then we should round to the largest possible with the given
-                integer_word_length
-        If the binary representation does not fill entire word_length pad with
-        extra zeros.
-        """
-        data_int = int(Decimal(data).to_integral_exact(rounding=ROUND_DOWN))
-        integer_binary = to_bin(data_int)
-
-        if (integer_binary == '0'):
-            return ''
-        if len(integer_binary) < self._integer_word_length:
-            integer_binary = integer_binary.zfill(self._integer_word_length)
-        elif len(integer_binary) > self._integer_word_length:
-            integer_binary = to_bin((2**(self._integer_word_length) - 1))
-            warn_coerced_data()
-        return integer_binary
-
-    def _calculate_binary_fraction_from_data(self, data):
-        """
-        There is not a built in way to convert from a fraction to a binary
-        representation, therefore this is a custom implementation for the
-        labVIEW FXP datatype.
-        """
-        fraction_data = Decimal(abs(data) % 1)
-        fraction_binary = ""
-        if self._integer_word_length < 0:
-            """ If the fixed point is entirely fractional
-            (self._integer_word_length is negative), then we expect there
-            to be leading zeros equal to the absolute value of the
-            self._integer_word_length. If the input data is too large we warn
-            the user and return highest possible value we can with this FXP
-            register.
-            This section of code also has another side effect as it sets up
-            the variable fraction_data to start obtaining the next
-            'significant' bits. """
-            fraction_data = fraction_data * 2**(abs(self._integer_word_length))
-            fraction_binary = fraction_binary.zfill(abs(self._integer_word_length))
-            if fraction_data > 1:
-                warn_coerced_data()
-                fraction_binary += to_bin((2**(self._word_length) - 1))
-                return fraction_binary
-
-        for i in range(0, self._word_length - self._radix_point):
-            fraction_data = fraction_data * 2
-            if fraction_data >= 1:
-                fraction_binary += '1'
-                fraction_data = Decimal(fraction_data % 1)
-            else:
-                fraction_binary += '0'
-
-        if fraction_data != 0:
-            warn_coerced_data()
-        return fraction_binary
-
-    def _calculate_radix_point(self):
-        """
-            The radix is the point that separates the bits between the word and
-        fractional parts if the number.The word_length can be an integer
-        between 1  and 64, while the integer_word_length can be any integer
-        between -1024 and 1024.
-            Meaning if the integer_word_length is equal or greater than
-        the word_length, the fixed point will have no fraction. Inversely,
-        if the integer_word_length is less than zero then the FXP is entirely
-        fractional.
-            This means we only have a non-zero radix (FXP includes both
-        integer and fractional portions) if the the integer_word is within the
-        bounds of the word_length.
-        """
-
-        if self._word_length >= self._integer_word_length > 0:
-            return self._integer_word_length
-        else:
-            return 0
+    def warn_coerced_data(self):
+        warn("The inputed value was not able to be converted to FXP, without coercion. ")
 
     def _get_read_function(self):
         return self._nifpga["ReadArray%s" % DataType.U32]

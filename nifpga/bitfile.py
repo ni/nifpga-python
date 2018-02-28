@@ -187,7 +187,6 @@ class Fxp_Register(Register):
     FPGA VI.
     """
     def __init__(self, reg_xml, register):
-
         self._copy_values_from_register(register)
         datatype = reg_xml.find("Datatype")
         fxp_xml = datatype.find("FXP")
