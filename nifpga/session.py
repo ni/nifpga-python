@@ -15,6 +15,7 @@ from collections import namedtuple
 import ctypes
 from builtins import bytes
 from decimal import Decimal
+from numbers import Number
 from future.utils import iteritems
 from warnings import warn
 
@@ -465,17 +466,6 @@ class _FxpRegister(_ArrayRegister):
         self._minimum = self._calculate_minimum()
         self._maximum = self._calculate_maximum()
 
-    @property
-    def overflow(self):
-        """ This property should only set be whenever this register has overflow
-        enabled"""
-        return self._overflow
-
-    @overflow.setter
-    def overflow(self, value):
-        if self._overflow_enabled:
-            self._overflow = value
-
     def _calculate_delta(self):
         """ The value represented in the bitfile for delta is not always
         correct, therefore we must calculate it ourselves.
@@ -530,12 +520,18 @@ class _FxpRegister(_ArrayRegister):
         """ This function converts read value from a RIO device and sets
         the overflow bit if enabled and returns a Decimal representation of
         the fixed point. """
+        overflow = None
         if self._overflow_enabled:
-            self.overflow = self._get_overflow_value(data)
+            overflow = self._get_overflow_value(data)
             data = self._remove_overflow_bit(data)
+
         if self._signed:
             data = self._integer_twos_comp(data)
-        return Decimal(data * self._delta)
+        decimal_value = Decimal(data * self._delta)
+        if self._overflow_enabled:
+            return (overflow, decimal_value)
+        else:
+            return decimal_value
 
     def _get_overflow_value(self, data):
         """ Mask out all the data within the word length, leaving the overflow
@@ -558,7 +554,7 @@ class _FxpRegister(_ArrayRegister):
             data *= -1
         return data
 
-    def write(self, data):
+    def write(self, user_input):
         """ Converts the passed in argument into fixed point representation
         and then writes it into the register.
 
@@ -571,12 +567,15 @@ class _FxpRegister(_ArrayRegister):
                 value of the attribute into the register. Users should set this
                 attribute on the the register before calling write.
         """
-        fxp_representation = self._convert_written_value_to_fxp_representation(data)
+
+        fxp_representation = self._convert_user_input_to_fxp_representation(user_input)
         arrayData = self._extract_array_of_u32_from_one_intger(fxp_representation)
         super(_FxpRegister, self).write(arrayData)
 
-    def _convert_written_value_to_fxp_representation(self, data):
+    def _convert_user_input_to_fxp_representation(self, user_input):
         """ """
+        (overflow, data) = self._validate_and_parse_user_input(user_input)
+
         fxp_representation = 0
         if data < self._minimum:
             fxp_representation = self._convert_value_to_fxp(self._minimum)
@@ -591,10 +590,27 @@ class _FxpRegister(_ArrayRegister):
             fxp_representation = self._integer_twos_comp(fxp_representation)
 
         if self._overflow_enabled:
-            self._check_overflow_attribute_is_set()
-            if self.overflow:
+            if overflow:
                 fxp_representation += 2**(self._word_length)
+
         return fxp_representation
+
+    def _validate_and_parse_user_input(self, user_input):
+        overflow = None
+        data = None
+        if self._overflow_enabled:
+            try:
+                (overflow, data) = user_input
+            except TypeError as e:
+                e.message += "FXP registers with overflow input is a tuple," \
+                             "where the first element is overflow status and" \
+                             "second in the fixed point value."
+                raise
+            assert isinstance(overflow, bool)
+        else:
+            data = user_input
+        assert isinstance(data, Number)
+        return (overflow, data)
 
     def _convert_value_to_fxp(self, data):
         calculated_fxp = Decimal(data) / Decimal(self._delta)
