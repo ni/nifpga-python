@@ -483,8 +483,9 @@ class _FxpRegister(_ArrayRegister):
         return 2**(self._integer_word_length - self._word_length)
 
     def _calculate_maximum(self):
-        """ The value represented in the bitfile for the maximum FXP value is
-        not always correct, therefore we must calculate it ourselves.
+        """ The value represented in the bitfile for the maximum FXP value.
+        The xml on the bitfile is not always accurate, therefore we must
+        calculate it ourselves.
         """
         if self._signed:
             magnitude_bits = self._word_length - 1
@@ -498,7 +499,7 @@ class _FxpRegister(_ArrayRegister):
         """
         if self._signed:
             magnitude_bits = self._word_length - 1
-            return -1 * ((2**(magnitude_bits)) * self._delta)
+            return -1 * (2**(magnitude_bits) * self._delta)
         else:
             return 0
 
@@ -570,8 +571,6 @@ class _FxpRegister(_ArrayRegister):
                 value of the attribute into the register. Users should set this
                 attribute on the the register before calling write.
         """
-
-        #binary = self._convert_data_to_binary_fxp(data)
         fxp_representation = self._convert_written_value_to_fxp_representation(data)
         arrayData = self._extract_array_of_u32_from_one_intger(fxp_representation)
         super(_FxpRegister, self).write(arrayData)

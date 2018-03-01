@@ -1,9 +1,8 @@
+from decimal import Decimal
 from nifpga import DataType
 from nifpga.session import _FxpRegister
 from test_nifpga import assert_warns
-from decimal import Decimal
 import unittest
-import warnings
 
 
 class MockFxpRegister(_FxpRegister):
@@ -31,84 +30,141 @@ class MockFxpRegister(_FxpRegister):
         self._is_array = False  # This mock is always a single FXP
 
 
+def _calculate_minimum_fxp_value(register):
+    if register._signed:
+        return 2**(register._word_length - 1)
+    else:
+        return 0
+
+
+def _calculate_maximum_fxp_value(register):
+    if register._signed:
+        magnitude_bits = register._word_length - 1
+    else:
+        magnitude_bits = register._word_length
+    return (2**(magnitude_bits) - 1)
+
+
+class FXPRegisterAsserts(object):
+    def __init__(self, test):
+        self._test = test
+
+    def assert_fxp_value_converted_to_decimal(self,
+                                              register,
+                                              read_value,
+                                              expected_value):
+        actual = register._convert_from_read_value_to_decimal(read_value)
+        self._test.assertEqual(actual, expected_value)
+
+    def assert_user_input_converted_to_fxp(self,
+                                           register,
+                                           user_input,
+                                           expected_value):
+        actual = register._convert_written_value_to_fxp_representation(user_input)
+        self._test.assertEqual(actual, expected_value)
+
+    def assert_user_input_less_than_minimum_warns_returns_coerced_value(self,
+                                                                        register,
+                                                                        expected_value):
+        less_than_minimum = register._minimum - positive_integer
+        expected_value = _calculate_minimum_fxp_value(register)
+        with assert_warns(UserWarning):
+            self._test.assert_user_input_converted_to_fxp(register,
+                                                          less_than_minimum,
+                                                          expected_value)
+
+    def assert_user_input_great_than_maximum_warns_returns_coerced_value(self,
+                                                                         register,
+                                                                         expected_value):
+        greater_than_max = register._maximum + positive_integer
+        expected_value = _calculate_maximum_fxp_value(register)
+        with assert_warns(UserWarning):
+            self._test.assert_user_input_converted_to_fxp(register,
+                                                          greater_than_max,
+                                                          expected_value)
+
+
 """ These are a couple of arbitrary binary strings that the following unit
 to test a non random value.
 """
 binary_string_16bit = '1110010010010110'  # 2's comp = 0001101101101010
 binary_string_32bit = '01000101100100100011000100001100'
 
+positive_integer = 42  # Arbitrary constant used in some tests
 
-class FXPRegister16bitWord16bitInteger(unittest.TestCase):
+
+class FXPRegisterSharedTests(unittest.TestCase):
+    def setUp(self):
+        self.testRegister = MockFxpRegister(signed=False,
+                                            enableOverflowStatus=False,
+                                            word_length=1,
+                                            integer_word_length=1)
+        self.FxpAssert = FXPRegisterAsserts(self)
+        self.fxp_value = int('1', 2)
+        self.decimal_value = Decimal(1)
+
+    def test_converting_fxp_to_decimal_value(self):
+        self.FxpAssert.assert_fxp_value_converted_to_decimal(self.testRegister,
+                                                             self.fxp_value,
+                                                             self.decimal_value)
+
+    def test_converting_user_data_into_binary(self):
+        self.FxpAssert.assert_user_input_converted_to_fxp(self.testRegister,
+                                                          self.decimal_value,
+                                                          self.fxp_value)
+
+    def test_user_input_less_than_minimum(self):
+        less_than_minimum = self.testRegister._minimum - positive_integer
+        expected_value = _calculate_minimum_fxp_value(self.testRegister)
+        with assert_warns(UserWarning):
+            self.FxpAssert.assert_user_input_converted_to_fxp(self.testRegister,
+                                                              less_than_minimum,
+                                                              expected_value)
+
+    def test_user_input_greater_than_maximum(self):
+        greater_than_max = self.testRegister._maximum + positive_integer
+        expected_value = _calculate_maximum_fxp_value(self.testRegister)
+        with assert_warns(UserWarning):
+            self.FxpAssert.assert_user_input_converted_to_fxp(self.testRegister,
+                                                              greater_than_max,
+                                                              expected_value)
+
+
+class FXPRegister16bitWord16bitInteger(FXPRegisterSharedTests):
     def setUp(self):
         self.testRegister = MockFxpRegister(signed=False,
                                             enableOverflowStatus=False,
                                             word_length=16,
                                             integer_word_length=16)
-
-    def test_converting_binary_into_decimal(self):
-        value = (int(binary_string_16bit, 2))
-        actual = self.testRegister._convert_from_read_value_to_decimal(
-            value)
-        """ The expected value should be equal to
-        2^(15) + 2^(14) + 2^(13) + 2^(10) + 2^(7) + 2^(4) + 2^(2) + 2^(1)
-        """
-        expected = Decimal(58518)
-        self.assertEqual(expected, actual)
-
-    def test_converting_user_data_into_binary(self):
-        value = Decimal(58518)
-        actual = self.testRegister._convert_written_value_to_fxp_representation(value)
-        expected = int(binary_string_16bit, 2)
-        self.assertEqual(expected, actual)
-
-    def test_converting_user_data_too_small_warns_and_coerces_zero(self):
-        value = Decimal(-6)  # Arbitrary negative number
-        with assert_warns(UserWarning):
-            actual = self.testRegister._convert_written_value_to_fxp_representation(value)
-            expected = 0
-            self.assertEqual(expected, actual)
+        self.FxpAssert = FXPRegisterAsserts(self)
+        self.fxp_value = int(binary_string_16bit, 2)
+        self.decimal_value = Decimal(2**(15) + 2**(14) + 2**(13) + 2**(10)
+                                     + 2**(7) + 2**(4) + 2**(2) + 2**(1))
 
 
-class FXPRegister16bitWord16bitIntegerSigned(unittest.TestCase):
+class FXPRegister16bitWord16bitIntegerSigned(FXPRegisterSharedTests):
     def setUp(self):
         self.testRegister = MockFxpRegister(signed=True,
                                             enableOverflowStatus=False,
                                             word_length=16,
                                             integer_word_length=16)
-
-    def test_converting_binary_into_decimal(self):
-        value = int(binary_string_16bit, 2)
-        actual = self.testRegister._convert_from_read_value_to_decimal(value)
-        """ The expected value should be equal to
-        (-1)(1*(2^(12) + 2^(11) + 2^(9) + 2^(8) + 2^(6) + 2^(5) + 2^(3) + 2^(1))
-        """
-        expected = Decimal(-7018)
-        self.assertEqual(expected, actual)
-
-    def test_converting_user_data_into_binary(self):
-        value = Decimal(-7018)
-        actual = self.testRegister._convert_written_value_to_fxp_representation(value)
-        expected = int(binary_string_16bit, 2)
-        self.assertEqual(expected, actual)
+        self.FxpAssert = FXPRegisterAsserts(self)
+        self.fxp_value = int(binary_string_16bit, 2)
+        self.decimal_value = Decimal((-1)*(2**(12) + 2**(11) + 2**(9) + 2**(8)
+                                           + 2**(6) + 2**(5) + 2**(3) + 2**(1)))
 
 
-class FXPRegister15bitWord15bitIntegerOverflow(unittest.TestCase):
+class FXPRegister15bitWord15bitIntegerOverflow(FXPRegisterSharedTests):
+
     def setUp(self):
         self.testRegister = MockFxpRegister(signed=False,
                                             enableOverflowStatus=True,
                                             word_length=15,
                                             integer_word_length=15)
-
-    def test_converting_binary_into_decimal(self):
-        value = int(binary_string_16bit, 2)
-        actual = self.testRegister._convert_from_read_value_to_decimal(value)
-        """ The expected value should be equal to an overflow with a value
-        of
-        2^(15) + 2^(14) + 2^(13) + 2^(10) + 2^(7) + 2^(4) + 2^(2) + 2^(1)
-        """
-        expected = Decimal(25750)
-        self.assertEqual(expected, actual)
-        self.assertTrue(self.testRegister.overflow)
+        self.FxpAssert = FXPRegisterAsserts(self)
+        self.fxp_value = int(binary_string_16bit, 2)
+        self.decimal_value = Decimal(2**(14) + 2**(13) + 2**(10) + 2**(7)
+                                     + 2**(4) + 2**(2) + 2**(1))
 
     def test_overflow_is_only_set_after_read(self):
         self.assertFalse(hasattr(self.testRegister, "overflow"))
@@ -116,41 +172,48 @@ class FXPRegister15bitWord15bitIntegerOverflow(unittest.TestCase):
         self.testRegister._convert_from_read_value_to_decimal(value)
         self.assertTrue(self.testRegister.overflow)
 
-    def test_converting_user_data_into_binary_with_overflow(self):
-        value = Decimal(25750)
-        self.testRegister.overflow = True
-        actual = self.testRegister._convert_written_value_to_fxp_representation(value)
-        expected = int(binary_string_16bit, 2)
-        self.assertEqual(expected, actual)
-
     def test_converting_user_data_without_setting_overflow_warns(self):
-        value = Decimal(25750)
+        """ Because overflow is not set the overflow bit should be False."""
+        expected = self.fxp_value - 2**(self.testRegister._word_length)
         with assert_warns(UserWarning):
-            actual = self.testRegister._convert_written_value_to_fxp_representation(value)
-            # Because overflow is not set the overflow bit should be False.
-            expected = int('0' + binary_string_16bit[1:], 2)
-            self.assertEqual(expected, actual)
+            self.FxpAssert.assert_user_input_converted_to_fxp(self.testRegister,
+                                                              self.decimal_value,
+                                                              expected)
+
+    def test_converting_fxp_to_decimal_value(self):
+        super(FXPRegister15bitWord15bitIntegerOverflow, self). \
+            test_converting_fxp_to_decimal_value()
+        self.assertTrue(self.testRegister.overflow)
+
+    def test_converting_user_data_into_binary(self):
+        self.testRegister.overflow = True
+        super(FXPRegister15bitWord15bitIntegerOverflow, self). \
+            test_converting_user_data_into_binary()
+
+    def test_user_input_less_than_minimum(self):
+        self.testRegister.overflow = False
+        super(FXPRegister15bitWord15bitIntegerOverflow, self). \
+            test_user_input_less_than_minimum()
+
+    def test_user_input_greater_than_maximum(self):
+        self.testRegister.overflow = False
+        super(FXPRegister15bitWord15bitIntegerOverflow, self). \
+            test_user_input_greater_than_maximum()
 
 
-class FXPRegister15bitWord15bitIntegerSignedOverflow(unittest.TestCase):
+class FXPRegister15bitWord15bitIntegerSignedOverflow(FXPRegisterSharedTests):
     def setUp(self):
         self.testRegister = MockFxpRegister(signed=True,
                                             enableOverflowStatus=True,
                                             word_length=15,
                                             integer_word_length=15)
-
-    def test_converting_binary_into_decimal(self):
-        value = int(binary_string_16bit, 2)
-        actual = self.testRegister._convert_from_read_value_to_decimal(value)
-        """ The expected value should be equal to a
-        -1*(2^(12) + 2^(11) + 2^(9) + 2^(8) + 2^(6) + 2^(5) + 2^(3) + 2^(1))
-        """
-        expected = Decimal(-7018)
-        self.assertEqual(expected, actual)
-        self.assertTrue(self.testRegister.overflow)
+        self.FxpAssert = FXPRegisterAsserts(self)
+        self.fxp_value = int(binary_string_16bit, 2)
+        self.decimal_value = Decimal((-1)*(2**(12) + 2**(11) + 2**(9) + 2**(8)
+                                           + 2**(6) + 2**(5) + 2**(3) + 2**(1)))
 
     def test_overflow_bit_is_not_calculated_in_twos_compliment(self):
-        # Create a 16 bit word that is all 1's
+        # Create a 15 bit word that is all 1's
         value = int('1' * (self.testRegister._word_length + 1), 2)
         actual = self.testRegister._convert_from_read_value_to_decimal(value)
         """ The expected value of overflow(1) 111 1111 1111 1111, would
@@ -159,185 +222,191 @@ class FXPRegister15bitWord15bitIntegerSignedOverflow(unittest.TestCase):
         self.assertTrue(self.testRegister.overflow)
         self.assertEqual(-1, actual)
 
+    def test_converting_fxp_to_decimal_value(self):
+        super(FXPRegister15bitWord15bitIntegerSignedOverflow, self). \
+            test_converting_fxp_to_decimal_value()
+        self.assertTrue(self.testRegister.overflow)
+
     def test_converting_user_data_into_binary(self):
-        value = Decimal(-7018)
         self.testRegister.overflow = True
-        actual = self.testRegister._convert_written_value_to_fxp_representation(value)
-        expected = int(binary_string_16bit, 2)
-        self.assertEqual(expected, actual)
+        super(FXPRegister15bitWord15bitIntegerSignedOverflow, self). \
+            test_converting_user_data_into_binary()
+
+    def test_user_input_less_than_minimum(self):
+        self.testRegister.overflow = False
+        super(FXPRegister15bitWord15bitIntegerSignedOverflow, self). \
+            test_user_input_less_than_minimum()
+
+    def test_user_input_greater_than_maximum(self):
+        self.testRegister.overflow = False
+        super(FXPRegister15bitWord15bitIntegerSignedOverflow, self). \
+            test_user_input_greater_than_maximum()
 
 
-class FXPRegister16bitWord0bitInteger(unittest.TestCase):
+class FXPRegister16bitWord0bitInteger(FXPRegisterSharedTests):
     def setUp(self):
         self.testRegister = MockFxpRegister(signed=False,
                                             enableOverflowStatus=False,
                                             word_length=16,
                                             integer_word_length=0)
-
-    def test_converting_binary_into_decimal(self):
-        value = int(binary_string_16bit, 2)
-        actual = self.testRegister._convert_from_read_value_to_decimal(value)
-        """ The expected value should be equal to
-        2^(-1) + 2^(-2) + 2^(-3) + 2^(-6) + 2^(-9) + 2^(-12) + 2^(-14) + 2^(-15)
-        """
-        expected = Decimal(0.892913818359375)
-        self.assertEqual(expected, actual)
-
-    def test_converting_user_data_into_binary(self):
-        value = Decimal(0.892913818359375)
-        actual = self.testRegister._convert_written_value_to_fxp_representation(value)
-        expected = int(binary_string_16bit, 2)
-        self.assertEqual(expected, actual)
+        self.FxpAssert = FXPRegisterAsserts(self)
+        self.fxp_value = int(binary_string_16bit, 2)
+        self.decimal_value = Decimal(2**(-1) + 2**(-2) + 2**(-3) + 2**(-6)
+                                     + 2**(-9) + 2**(-12) + 2**(-14)
+                                     + 2**(-15))
 
 
-class FXPRegister15bitWord0bitIntegerOverflow(unittest.TestCase):
+class FXPRegister15bitWord0bitIntegerOverflow(FXPRegisterSharedTests):
     def setUp(self):
         self.testRegister = MockFxpRegister(signed=False,
                                             enableOverflowStatus=True,
                                             word_length=15,
                                             integer_word_length=0)
+        self.FxpAssert = FXPRegisterAsserts(self)
+        self.fxp_value = int(binary_string_16bit, 2)
+        self.decimal_value = Decimal(2**(-1) + 2**(-2) + 2**(-5) + 2**(-8)
+                                     + 2**(-11) + 2**(-13) + 2**(-14))
 
-    def test_converting_binary_into_decimal(self):
-        value = int(binary_string_16bit, 2)
-        actual = self.testRegister._convert_from_read_value_to_decimal(value)
-        """ The expected value should be equal to
-        2^(-1) + 2^(-2) + 2^(-5) + 2^(-8) + 2^(-11) + 2^(-13) + 2^(-14)
-        """
-        expected = Decimal(0.78582763671875)
-        self.assertEqual(expected, actual)
+    def test_converting_fxp_to_decimal_value(self):
+        super(FXPRegister15bitWord0bitIntegerOverflow, self). \
+            test_converting_fxp_to_decimal_value()
         self.assertTrue(self.testRegister.overflow)
 
     def test_converting_user_data_into_binary(self):
-        value = Decimal(0.78582763671875)
         self.testRegister.overflow = True
-        actual = self.testRegister._convert_written_value_to_fxp_representation(value)
-        expected = int(binary_string_16bit, 2)
-        self.assertEqual(expected, actual)
+        super(FXPRegister15bitWord0bitIntegerOverflow, self). \
+            test_converting_user_data_into_binary()
+
+    def test_user_input_less_than_minimum(self):
+        self.testRegister.overflow = False
+        super(FXPRegister15bitWord0bitIntegerOverflow, self). \
+            test_user_input_less_than_minimum()
+
+    def test_user_input_greater_than_maximum(self):
+        self.testRegister.overflow = False
+        super(FXPRegister15bitWord0bitIntegerOverflow, self). \
+            test_user_input_greater_than_maximum()
 
 
-class FXPRegister15bitWord0bitIntegerSignedOverflow(unittest.TestCase):
+class FXPRegister15bitWord0bitIntegerSignedOverflow(FXPRegisterSharedTests):
     def setUp(self):
         self.testRegister = MockFxpRegister(signed=True,
                                             enableOverflowStatus=True,
                                             word_length=15,
                                             integer_word_length=0)
+        self.FxpAssert = FXPRegisterAsserts(self)
+        self.fxp_value = int(binary_string_16bit, 2)
+        self.decimal_value = Decimal((-1)*(2**(-3) + 2**(-4) + 2**(-6)
+                                           + 2**(-7) + 2**(-9) + 2**(-10)
+                                           + 2**(-12) + 2**(-14)))
 
-    def test_converting_binary_into_decimal(self):
-        value = int(binary_string_16bit, 2)
-        actual = self.testRegister._convert_from_read_value_to_decimal(value)
-        """ The expected value should be equal to
-        2^(-3) + 2^(-4) + 2^(-6) + 2^(-7) + 2^(-9) + 2^(-10) + 2^(-12) + 2^(-14)
-        """
-        expected = Decimal(-0.21417236328125)
-        self.assertEqual(expected, actual)
+    def test_converting_fxp_to_decimal_value(self):
+        super(FXPRegister15bitWord0bitIntegerSignedOverflow, self). \
+            test_converting_fxp_to_decimal_value()
         self.assertTrue(self.testRegister.overflow)
 
     def test_converting_user_data_into_binary(self):
-        value = Decimal(-0.21417236328125)
         self.testRegister.overflow = True
-        actual = self.testRegister._convert_written_value_to_fxp_representation(value)
-        expected = int(binary_string_16bit, 2)
-        self.assertEqual(expected, actual)
+        super(FXPRegister15bitWord0bitIntegerSignedOverflow, self). \
+            test_converting_user_data_into_binary()
+
+    def test_user_input_less_than_minimum(self):
+        self.testRegister.overflow = False
+        super(FXPRegister15bitWord0bitIntegerSignedOverflow, self). \
+            test_user_input_less_than_minimum()
+
+    def test_user_input_greater_than_maximum(self):
+        self.testRegister.overflow = False
+        super(FXPRegister15bitWord0bitIntegerSignedOverflow, self). \
+            test_user_input_greater_than_maximum()
 
 
-class FXPRegister32bitWord16bitIntegerOverflow(unittest.TestCase):
+class FXPRegister32bitWord16bitIntegerOverflow(FXPRegisterSharedTests):
     def setUp(self):
         self.testRegister = MockFxpRegister(signed=False,
                                             enableOverflowStatus=True,
                                             word_length=32,
                                             integer_word_length=16)
+        self.FxpAssert = FXPRegisterAsserts(self)
+        """ binary String '(0) 0100010110010010.0011000100001100' """
+        self.fxp_value = int('0' + binary_string_32bit, 2)
+        self.decimal_value = Decimal(2**(1) + 2**(4) + 2**(7) + 2**(8)
+                                     + 2**(10) + 2**(14) + 2**(-3) + 2**(-4)
+                                     + 2**(-8) + 2**(-13) + 2**(-14))
 
-    def test_converting_binary_into_decimal(self):
-        """ binary String '(1) 0100010110010010.0011000100001100'
-        The expected value should be equal to
-        2^(1) + 2^(4) + 2^(7) + 2^(8) + 2^(10) + 2^(14) +
-        2^(-3) + 2^(-4) + 2^(-8) + 2^(-13) + 2^(-14)
-        """
-        value = int('0' + binary_string_32bit, 2)
-        actual = self.testRegister._convert_from_read_value_to_decimal(value)
-        expected = Decimal(17810.19158935546875)
-        self.assertEqual(expected, actual)
+    def test_converting_fxp_to_decimal_value(self):
+        super(FXPRegister32bitWord16bitIntegerOverflow, self). \
+            test_converting_fxp_to_decimal_value()
         self.assertFalse(self.testRegister.overflow)
 
     def test_converting_user_data_into_binary(self):
-        value = Decimal(17810.19158935546875)
         self.testRegister.overflow = False
-        actual = self.testRegister._convert_written_value_to_fxp_representation(value)
-        expected = int(binary_string_32bit, 2)
-        self.assertEqual(expected, actual)
+        super(FXPRegister32bitWord16bitIntegerOverflow, self). \
+            test_converting_user_data_into_binary()
+
+    def test_user_input_less_than_minimum(self):
+        self.testRegister.overflow = False
+        super(FXPRegister32bitWord16bitIntegerOverflow, self). \
+            test_user_input_less_than_minimum()
+
+    def test_user_input_greater_than_maximum(self):
+        self.testRegister.overflow = False
+        super(FXPRegister32bitWord16bitIntegerOverflow, self). \
+            test_user_input_greater_than_maximum()
 
 
-class FXPRegister16bitWord100bitInteger(unittest.TestCase):
+class FXPRegister16bitWord100bitInteger(FXPRegisterSharedTests):
     def setUp(self):
         self.testRegister = MockFxpRegister(signed=False,
                                             enableOverflowStatus=False,
                                             word_length=16,
                                             integer_word_length=100)
-
-    def test_converting_binary_into_decimal(self):
-        value = int(binary_string_16bit, 2)
-        actual = self.testRegister._convert_from_read_value_to_decimal(value)
-        """ The expected value should be equal to
-        2^(99) + 2^(98) + 2^(97) + 2^(94) + 2^(91) + 2^(88) + 2^(86) + 2^(85)
-        """
-        expected = Decimal(1131902737795341920727296114688)
-        self.assertTrue(expected, actual)
-
-    def test_converting_user_data_into_binary(self):
-        value = Decimal(1131902737795341920727296114688)
-        actual = self.testRegister._convert_written_value_to_fxp_representation(value)
-        expected = int(binary_string_16bit, 2)
-        self.assertEqual(expected, actual)
+        self.FxpAssert = FXPRegisterAsserts(self)
+        self.fxp_value = int(binary_string_16bit, 2)
+        self.decimal_value = Decimal(2**(99) + 2**(98) + 2**(97) + 2**(94)
+                                     + 2**(91) + 2**(88) + 2**(86) + 2**(85))
 
 
-class FXPRegister16bitWordNegative100bitInteger(unittest.TestCase):
+class FXPRegister16bitWordNegative100bitInteger(FXPRegisterSharedTests):
     def setUp(self):
         self.testRegister = MockFxpRegister(signed=False,
                                             enableOverflowStatus=False,
                                             word_length=16,
                                             integer_word_length=-100)
+        self.FxpAssert = FXPRegisterAsserts(self)
+        self.fxp_value = int(binary_string_16bit, 2)
         self.decimal_value = Decimal(2**(-101) + 2**(-102) + 2**(-103) +
                                      2**(-106) + 2**(-109) + 2**(-112) +
                                      2**(-114) + 2**(-115))
 
-    def test_converting_binary_into_decimal(self):
-        value = int(binary_string_16bit, 2)
-        """ The expected value should be equal to
-        2^(-101) + 2^(-102) + 2^(-103) + 2^(-106) + 2^(-109) + 2^(-112)
-        + 2^(-114) + 2^(-115)
-        """
-        actual = self.testRegister._convert_from_read_value_to_decimal(value)
-        expected = self.decimal_value
-        self.assertEqual(expected, actual)
 
-    def test_converting_user_data_into_binary(self):
-        value = self.decimal_value
-        actual = self.testRegister._convert_written_value_to_fxp_representation(value)
-        expected = int(binary_string_16bit, 2)
-        self.assertEqual(expected, actual)
-
-
-class FXPRegister64bitWord64bitIntegerOverflow(unittest.TestCase):
+class FXPRegister64bitWord64bitIntegerOverflow(FXPRegisterSharedTests):
     def setUp(self):
         self.testRegister = MockFxpRegister(signed=False,
                                             enableOverflowStatus=True,
                                             word_length=64,
                                             integer_word_length=64)
-        self.binary_string = '1' + binary_string_32bit + binary_string_32bit
+        self.FxpAssert = FXPRegisterAsserts(self)
+        """(1) 0100 0101 1001 0010 0011 0001 0000 1100 0100 0101 1001 0010 0011 0001 0000 1100 """
+        self.fxp_value = int('1' + binary_string_32bit + binary_string_32bit, 2)
+        self.decimal_value = Decimal(5013123263993360652)
 
-    def test_converting_binary_into_decimal(self):
-        """Read value is equal to
-        (1)0100010110010010001100010000110001000101100100100011000100001100
-        """
-        value = int(self.binary_string, 2)
-        actual = self.testRegister._convert_from_read_value_to_decimal(value)
-        expected = Decimal(5013123263993360652)
-        self.assertEqual(expected, actual)
+    def test_converting_fxp_to_decimal_value(self):
+        super(FXPRegister64bitWord64bitIntegerOverflow, self). \
+            test_converting_fxp_to_decimal_value()
         self.assertTrue(self.testRegister.overflow)
 
     def test_converting_user_data_into_binary(self):
-        value = Decimal(5013123263993360652)
         self.testRegister.overflow = True
-        actual = self.testRegister._convert_written_value_to_fxp_representation(value)
-        expected = int(self.binary_string, 2)
-        self.assertEqual(expected, actual)
+        super(FXPRegister64bitWord64bitIntegerOverflow, self). \
+            test_converting_user_data_into_binary()
+
+    def test_user_input_less_than_minimum(self):
+        self.testRegister.overflow = False
+        super(FXPRegister64bitWord64bitIntegerOverflow, self). \
+            test_user_input_less_than_minimum()
+
+    def test_user_input_greater_than_maximum(self):
+        self.testRegister.overflow = False
+        super(FXPRegister64bitWord64bitIntegerOverflow, self). \
+            test_user_input_greater_than_maximum()
