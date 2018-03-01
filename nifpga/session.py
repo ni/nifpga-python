@@ -14,10 +14,12 @@ from .status import InvalidSessionError
 from collections import namedtuple
 import ctypes
 from builtins import bytes
-from decimal import Decimal
+from decimal import Decimal, getcontext
 from numbers import Number
 from future.utils import iteritems
 from warnings import warn
+
+getcontext().prec = 310
 
 
 class Session(object):
@@ -470,7 +472,7 @@ class _FxpRegister(_ArrayRegister):
         """ The value represented in the bitfile for delta is not always
         correct, therefore we must calculate it ourselves.
         """
-        return 2**(self._integer_word_length - self._word_length)
+        return Decimal(2**(self._integer_word_length - self._word_length))
 
     def _calculate_maximum(self):
         """ The value represented in the bitfile for the maximum FXP value.
