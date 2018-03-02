@@ -73,13 +73,17 @@ class Bitfile(object):
         return self._base_address_on_device
 
     def create_register(self, xml):
-        register = Register(xml)
-        if (self._is_register_fxp(register)):
-            register = Fxp_Register(xml, register)
-        return register
+        if self._is_register_fxp(xml):
+            return Fxp_Register(xml)
+        else:
+            return Register(xml)
 
-    def _is_register_fxp(self, register):
-        return register.datatype is DataType.FXP
+    def _is_register_fxp(self, reg_xml):
+        datatype = reg_xml.find("Datatype")
+        for child in datatype.getchildren():
+            if str(DataType.Fxp).lower() not in child.tag.lower():
+                return False
+        return True
 
 
 class Register(object):
@@ -186,23 +190,14 @@ class Fxp_Register(Register):
     A fixed point control or indicator from the front panel of the top level
     FPGA VI.
     """
-    def __init__(self, reg_xml, register):
-        self._copy_values_from_register(register)
+    def __init__(self, reg_xml):
+        super(Fxp_Register, self).__init__(reg_xml)
         datatype = reg_xml.find("Datatype")
         fxp_xml = datatype.find("FXP")
         self._signed = True if fxp_xml.find("Signed").text.lower() == 'true' else False
         self._overflow = True if fxp_xml.find("IncludeOverflowStatus").text.lower() == 'true' else False
         self._word_length = int(fxp_xml.find("WordLength").text)
         self._integer_word_length = int(fxp_xml.find("IntegerWordLength").text)
-
-    def _copy_values_from_register(self, register):
-        self._name = register.name
-        self._offset = register.offset
-        self._datatype = register.datatype
-        self._access_may_timeout = register.access_may_timeout()
-        self._internal = register.is_internal()
-        self._num_elements = len(register)
-        self._is_array = register.is_array()
 
     def __len__(self):
         """ Fixed point values are transfered to the driver as an array of U32
