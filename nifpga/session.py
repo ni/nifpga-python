@@ -15,6 +15,7 @@ from collections import namedtuple
 import ctypes
 from builtins import bytes
 from decimal import Decimal
+from math import ceil
 from numbers import Number
 from future.utils import iteritems
 from warnings import warn
@@ -296,11 +297,24 @@ class _Register(object):
     of this class.
 
     """
-    def __init__(self, session, nifpga, bitfile_register, base_address_on_device):
+    def __init__(self,
+                 session,
+                 nifpga,
+                 bitfile_register,
+                 base_address_on_device,
+                 read_func=None,
+                 write_func=None):
         self._datatype = bitfile_register.datatype
         self._name = bitfile_register.name
         self._session = session
-        self._nifpga = nifpga
+        if read_func is None:
+            self._read_func = nifpga["Read%s" % self.datatype]
+        else:
+            self._read_func = read_func
+        if write_func is None:
+            self._write_func = nifpga["Write%s" % self.datatype]
+        else:
+            self._write_func = write_func
         self._ctype_type = self._datatype._return_ctype()
         self._resource = bitfile_register.offset + base_address_on_device
         if bitfile_register.access_may_timeout():
@@ -320,8 +334,7 @@ class _Register(object):
         Args:
             data (DataType.value): The data to be written into the register
         """
-        write_func = self.get_write_function()
-        write_func(self._session, self._resource, data)
+        self._write_func(self._session, self._resource, data)
 
     def read(self):
         """ Reads a single element from the control or indicator
@@ -330,8 +343,7 @@ class _Register(object):
             data (DataType.value): The data inside the register.
         """
         data = self._ctype_type()
-        read_func = self._get_read_function()
-        read_func(self._session, self._resource, data)
+        self._read_func(self._session, self._resource, data)
         if self._datatype is DataType.Bool:
             return bool(data.value)
         return data.value
@@ -348,16 +360,6 @@ class _Register(object):
         indicator. """
         return self._datatype
 
-    def _get_read_function(self):
-        """ Sets this registers read function based on the data type from the
-        bitfile."""
-        return self.nifpga["Read%s" % self.datatype]
-
-    def _get_write_function(self):
-        """ Sets this registers read function based on the data type from the
-        bitfile."""
-        return self.nifpga["Write%s" % self.datatype]
-
 
 class _ArrayRegister(_Register):
     """
@@ -372,7 +374,9 @@ class _ArrayRegister(_Register):
         super(_ArrayRegister, self).__init__(session,
                                              nifpga,
                                              bitfile_register,
-                                             base_address_on_device)
+                                             base_address_on_device,
+                                             read_func=nifpga["ReadArray%s" % self.datatype],
+                                             write_func=nifpga["WriteArray%s" % self.datatype])
         self._num_elements = len(bitfile_register)
         self._ctype_type = self._ctype_type * self._num_elements
 
@@ -400,8 +404,7 @@ class _ArrayRegister(_Register):
             "Bad data length %d for register '%s', expected %s" \
             % (len(data), self._name, len(self))
         buf = self._ctype_type(*data)
-        write_func = self._get_write_function()
-        write_func(self._session, self._resource, buf, len(self))
+        self._write_func(self._session, self._resource, buf, len(self))
 
     def read(self):
         """ Reads the entire array from the control or indicator.
@@ -415,18 +418,8 @@ class _ArrayRegister(_Register):
         val = [bool(elem) if self._datatype is DataType.Bool else elem for elem in buf]
         return val
 
-    def _get_read_function(self):
-        """ Sets this registers read function based on the data type from the
-        bitfile."""
-        return self._nifpga["ReadArray%s" % self.datatype]
 
-    def _get_write_function(self):
-        """ Sets this registers read function based on the data type from the
-        bitfile."""
-        return self._nifpga["WriteArray%s" % self.datatype]
-
-
-class _FxpRegister(_ArrayRegister):
+class _FxpRegister(_Register):
     """
     _FxpRegister is a private class that does all the work of converting the
     LabVIEW fixed point data type into something more native to python. This
@@ -456,8 +449,9 @@ class _FxpRegister(_ArrayRegister):
         super(_FxpRegister, self).__init__(session,
                                            nifpga,
                                            bitfile_register,
-                                           base_address_on_device)
-
+                                           base_address_on_device,
+                                           read_func=nifpga["ReadArray%s" % DataType.U32],
+                                           write_func=nifpga["WriteArray%s" % DataType.U32])
         self._word_length = bitfile_register.word_length
         self._integer_word_length = bitfile_register.integer_word_length
         self._overflow_enabled = bitfile_register.overflow
@@ -465,6 +459,8 @@ class _FxpRegister(_ArrayRegister):
         self._delta = self._calculate_delta()
         self._minimum = self._calculate_minimum()
         self._maximum = self._calculate_maximum()
+        self._transfer_len = self._calculate_transfer_len()
+        self._ctype_type = self._ctype_type * self._transfer_len
 
     def _calculate_delta(self):
         """ The value represented in the bitfile for delta is not always
@@ -493,27 +489,49 @@ class _FxpRegister(_ArrayRegister):
         else:
             return 0
 
+    def _calculate_transfer_len(self):
+        """ Fixed point values are transfered to the driver as an array of U32
+        The length is between 1 and 3 determined by the word length (includes
+        the signed bit) plus the include_overflow_status_enable bit.
+        """
+        bits_required = self._word_length
+        if self._overflow_enabled:
+            """ If overflow status is enabled we need an extra bit. """
+            bits_required += 1
+        if bits_required >= 32:
+            return int(ceil(bits_required / 32.0))
+        else:
+            return 1
+
     def read(self):
-        """ Reads the entire FXP number as an array U32 bits then combining
-        the array bits into a single datatype, then convert it into python
-        Decimal. The largest expecting transfer would be a 64 bit fixed point
-        with the overflow status enabled (making an array of length 3).
+        """ Reads the fixed point representation from the register
+        offset then converts it into a datatype more useful in python. For
+        a fixed point register without overflow status enabled this would be
+        as decimal.Decimal. If overflow status enabled the return value is a
+        tuple, where the first element is a bool for the overflow status, and
+        second element is a decimal.Decimal
 
         Returns:
-            data (DataType.value): The data in the register in a python list.
+            decimal.Decimal: Decimal representation of the fixed point number.
+        Returns:
+            (bool, decimal.Decimal): Boolean for overflow, Decimal
+                                     representation of the fixed point number.
         """
-        data = super(_FxpRegister, self).read()
-        data = self._combine_array_of_u32_into_one_value(data)
-        return self._convert_from_read_value_to_decimal(data)
+        buf = self._ctype_type()
+
+        self._read_func(self._session, self._resource, buf, self._transfer_len)
+        read_array = [elem for elem in buf]
+        fxp_integer = self._combine_array_of_u32_into_one_value(read_array)
+        return self._convert_from_read_value_to_decimal(fxp_integer)
 
     def _combine_array_of_u32_into_one_value(self, data):
         combinedData = 0
-        for index in range(0, len(self)):
+        for index in range(0, self._transfer_len):
             combinedData = (combinedData << 32) + data[index]
-        if len(self) > 1:
+        if self._transfer_len > 1:
             overflow_bit = 1 if self._overflow_enabled else 0
             total_num_bits = self._word_length + overflow_bit
-            combinedData = combinedData >> (32 * len(self) - total_num_bits)
+            combinedData = combinedData >> (32 * self._transfer_len - total_num_bits)
         return combinedData
 
     def _convert_from_read_value_to_decimal(self, data):
@@ -570,7 +588,8 @@ class _FxpRegister(_ArrayRegister):
 
         fxp_representation = self._convert_user_input_to_fxp_representation(user_input)
         arrayData = self._extract_array_of_u32_from_fxp_value(fxp_representation)
-        super(_FxpRegister, self).write(arrayData)
+        buf = self._ctype_type(*arrayData)
+        self._write_func(self._session, self._resource, buf, self._transfer_len)
 
     def _convert_user_input_to_fxp_representation(self, user_input):
         """ """
@@ -623,14 +642,14 @@ class _FxpRegister(_ArrayRegister):
         return fxp_representation
 
     def _extract_array_of_u32_from_fxp_value(self, data):
-        if len(self) > 1:
+        if self._transfer_len > 1:
             overflow_bit = 1 if self._overflow_enabled else 0
             total_num_bits = self._word_length + overflow_bit
-            data = data << (32 * len(self) - total_num_bits)
+            data = data << (32 * self._transfer_len - total_num_bits)
 
         mask_32bit = (2**32) - 1
         extracted_array = []
-        for index in range(0, len(self)):
+        for index in range(0, self._transfer_len):
             extracted_array.append(data & mask_32bit)
             data = data >> 32
         extracted_array.reverse()
@@ -643,12 +662,6 @@ class _FxpRegister(_ArrayRegister):
 
     def warn_coerced_data(self):
         warn("The inputed value was not able to be converted to FXP, without coercion. ")
-
-    def _get_read_function(self):
-        return self._nifpga["ReadArray%s" % DataType.U32]
-
-    def _get_write_function(self):
-        return self._nifpga["WriteArray%s" % DataType.U32]
 
 
 class _FIFO(object):

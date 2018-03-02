@@ -200,18 +200,7 @@ class Fxp_Register(Register):
         self._integer_word_length = int(fxp_xml.find("IntegerWordLength").text)
 
     def __len__(self):
-        """ Fixed point values are transfered to the driver as an array of U32
-        The length is between 1 and 3 determined by the word length (includes
-        the signed bit) plus the include_overflow_status_enable bit.
-        """
-        bits_required = self._word_length
-        if self._overflow:
-            """ If overflow status is enabled we need an extra bit. """
-            bits_required += 1
-        if bits_required >= 32:
-            return int(ceil(bits_required / 32.0))
-        else:
-            return 1
+        return 1
 
     @property
     def signed(self):
