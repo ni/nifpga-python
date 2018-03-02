@@ -4,7 +4,7 @@ from nifpga.session import _FxpRegister
 from test_nifpga import assert_warns
 import unittest
 
-getcontext().prec = 310
+getcontext().prec = 100
 
 
 class MockFxpRegister(_FxpRegister):

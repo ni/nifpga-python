@@ -14,12 +14,10 @@ from .status import InvalidSessionError
 from collections import namedtuple
 import ctypes
 from builtins import bytes
-from decimal import Decimal, getcontext
+from decimal import Decimal
 from numbers import Number
 from future.utils import iteritems
 from warnings import warn
-
-getcontext().prec = 310
 
 
 class Session(object):
@@ -511,7 +509,7 @@ class _FxpRegister(_ArrayRegister):
     def _combine_array_of_u32_into_one_value(self, data):
         combinedData = 0
         for index in range(0, len(self)):
-            combinedData = (combinedData << 32 * index) + data[index]
+            combinedData = (combinedData << 32) + data[index]
         if len(self) > 1:
             overflow_bit = 1 if self._overflow_enabled else 0
             total_num_bits = self._word_length + overflow_bit
@@ -571,7 +569,7 @@ class _FxpRegister(_ArrayRegister):
         """
 
         fxp_representation = self._convert_user_input_to_fxp_representation(user_input)
-        arrayData = self._extract_array_of_u32_from_one_intger(fxp_representation)
+        arrayData = self._extract_array_of_u32_from_fxp_value(fxp_representation)
         super(_FxpRegister, self).write(arrayData)
 
     def _convert_user_input_to_fxp_representation(self, user_input):
@@ -624,7 +622,12 @@ class _FxpRegister(_ArrayRegister):
             self.warn_coerced_data()
         return fxp_representation
 
-    def _extract_array_of_u32_from_one_intger(self, data):
+    def _extract_array_of_u32_from_fxp_value(self, data):
+        if len(self) > 1:
+            overflow_bit = 1 if self._overflow_enabled else 0
+            total_num_bits = self._word_length + overflow_bit
+            data = data << (32 * len(self) - total_num_bits)
+
         mask_32bit = (2**32) - 1
         extracted_array = []
         for index in range(0, len(self)):
