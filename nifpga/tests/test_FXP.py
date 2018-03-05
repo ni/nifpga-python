@@ -1,7 +1,7 @@
 from decimal import Decimal, getcontext
 from nifpga import DataType
 from nifpga.session import _FxpRegister
-from test_nifpga import assert_warns
+from nifpga.tests.test_nifpga import assert_warns
 import unittest
 
 getcontext().prec = 100
