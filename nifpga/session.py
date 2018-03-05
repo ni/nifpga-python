@@ -375,8 +375,8 @@ class _ArrayRegister(_Register):
                                              nifpga,
                                              bitfile_register,
                                              base_address_on_device,
-                                             read_func=nifpga["ReadArray%s" % self.datatype],
-                                             write_func=nifpga["WriteArray%s" % self.datatype])
+                                             read_func=nifpga["ReadArray%s" % bitfile_register.datatype],
+                                             write_func=nifpga["WriteArray%s" % bitfile_register.datatype])
         self._num_elements = len(bitfile_register)
         self._ctype_type = self._ctype_type * self._num_elements
 
@@ -436,9 +436,6 @@ class _FxpRegister(_Register):
         a value that needs to be coerced will result in a warning to the user.
         A value is to be coerced if it is not a multiple of the delta value, or
         if it exceeds the minimum or maximum values.
-        2. When writing to fixed point registers with the overflow status
-        enabled, you must pass in the tuple (overflow bool, value). Failing to
-        pass in the overflow boolean will raise a warning.
     """
     def __init__(self,
                  session,
@@ -503,10 +500,7 @@ class _FxpRegister(_Register):
         if self._overflow_enabled:
             """ If overflow status is enabled we need an extra bit. """
             bits_required += 1
-        if bits_required >= 32:
-            return int(ceil(bits_required / 32.0))
-        else:
-            return 1
+        return int(ceil(bits_required / 32.0))
 
     def read(self):
         """ Reads the fixed point value from the register and returns it as
@@ -527,9 +521,9 @@ class _FxpRegister(_Register):
 
     def _combine_array_of_u32_into_one_value(self, data):
         """ This method is a helper to convert the array read from hardware
-        and return a single value removing any excessive bits. Because the
-        significant bits are left associated we need to shift the the combined
-        data to the right.
+        and return a single value removing any excessive bits. Whenever
+        the array is longer than 1 element, the data is left justified, we need
+        to shift the combined data to the right before doing the conversion.
         For example, if the register had a word length of 54, the 54 MSB would
         be the fixed point bits. The 10 LSB of the combinedData must be shifted
         off in order to not mess up further calculations.
@@ -577,6 +571,8 @@ class _FxpRegister(_Register):
         return data & (2**(self._word_length) - 1)
 
     def _integer_twos_comp(self, data):
+        """ Checks the signed bit and determines if the value is negative, If
+        so take the twos compliment of the input."""
         signed_bit_mask = 2**(self._word_length - 1)
         if data & signed_bit_mask > 0:
             data = data ^ (2 ** (self._word_length) - 1)
@@ -631,9 +627,10 @@ class _FxpRegister(_Register):
             try:
                 (overflow, data) = user_input
             except TypeError:
+                """ If the user does not input any overflow status, eat the
+                exception and use default value of False. """
                 overflow = False
                 data = user_input
-                warn("Using default value 'False' for overflow status.")
             assert isinstance(overflow, bool)
         else:
             data = user_input

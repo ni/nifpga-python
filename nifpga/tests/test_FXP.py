@@ -160,10 +160,12 @@ class FXPRegister15bitWord15bitIntegerOverflow(FXPRegisterSharedTests):
         self.user_value = (True, Decimal(2**(14) + 2**(13) + 2**(10) + 2**(7)
                                          + 2**(4) + 2**(2) + 2**(1)))
 
-    def test_converting_user_data_without_overflow_raises(self):
-        with assert_warns(UserWarning):
-            self.testRegister. \
-                _convert_user_input_to_fxp_representation(self.user_value[1])
+    def test_converting_user_data_without_overflow_use_false(self):
+        fxp_with_false_overflow = self.fxp_value - 2**self.testRegister._word_length
+        self.FxpAssert.assert_user_input_converted_to_fxp(self.testRegister,
+                                                          self.user_value[1],
+                                                          fxp_with_false_overflow)
+
 
 
 class FXPRegister15bitWord15bitIntegerSignedOverflow(FXPRegisterSharedTests):
