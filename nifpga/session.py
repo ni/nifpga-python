@@ -9,7 +9,7 @@ from .nifpga import (_SessionType, _IrqContextType, _NiFpga, DataType,
                      CLOSE_ATTRIBUTE_NO_RESET_IF_LAST_SESSION, FifoProperty,
                      _fifo_properties_to_types, FlowControl, DmaBufferType,
                      FpgaViState)
-from .bitfile import Bitfile, Fxp_Register
+from .bitfile import Bitfile, FxpRegister
 from .status import InvalidSessionError
 from collections import namedtuple
 import ctypes
@@ -275,7 +275,7 @@ class Session(object):
                                   self._nifpga,
                                   bitfile_register,
                                   base_address_on_device)
-        elif isinstance(bitfile_register, Fxp_Register):
+        elif isinstance(bitfile_register, FxpRegister):
             return _FxpRegister(self._session,
                                 self._nifpga,
                                 bitfile_register,
@@ -413,8 +413,7 @@ class _ArrayRegister(_Register):
             (list): The data in the register in a python list.
         """
         buf = self._ctype_type()
-        read_func = self._get_read_function()
-        read_func(self._session, self._resource, buf, len(self))
+        self._read_func(self._session, self._resource, buf, len(self))
         val = [bool(elem) if self._datatype is DataType.Bool else elem for elem in buf]
         return val
 
@@ -439,7 +438,7 @@ class _FxpRegister(_Register):
         if it exceeds the minimum or maximum values.
         2. When writing to fixed point registers with the overflow status
         enabled, you must pass in the tuple (overflow bool, value). Failing to
-        pass in the overflow boolean will raise an exception.
+        pass in the overflow boolean will raise a warning.
     """
     def __init__(self,
                  session,
@@ -463,14 +462,19 @@ class _FxpRegister(_Register):
         self._ctype_type = self._ctype_type * self._transfer_len
 
     def _calculate_delta(self):
-        """ The value persisted in the bitfile for delta is not always
-        correct, therefore we must calculate it manually.
+        """ Determines the fixed point delta value, the value of the register
+        is only allowed to be an integer multiple of the delta. For example if
+        delta is 1, then it is impossible to represent a fraction.
+        The value persisted in the bitfile for delta is not always correct,
+        therefore we must calculate it manually.
         """
         return Decimal(2**(self._integer_word_length - self._word_length))
 
     def _calculate_minimum(self):
-        """ The value persisted in the bitfile for the minimum value is
-        not always accurate, therefore we must calculate it manually.
+        """ Determines the minimum possible value that can be represented with
+        the given fixed point register. The value persisted in the bitfile for
+        the minimum value is not always accurate, therefore we must calculate
+        it manually.
         """
         if self._signed:
             magnitude_bits = self._word_length - 1
@@ -479,8 +483,10 @@ class _FxpRegister(_Register):
             return 0
 
     def _calculate_maximum(self):
-        """ The value persisted in the bitfile for the maximum value is not
-        always accurate, therefore we must calculate it manually.
+        """ Determines the minimum possible value that can be represented with
+        the given fixed point register.The value persisted in the bitfile for
+        the maximum value is not always accurate, therefore we must calculate
+        it manually.
         """
         if self._signed:
             magnitude_bits = self._word_length - 1
@@ -503,12 +509,9 @@ class _FxpRegister(_Register):
             return 1
 
     def read(self):
-        """ Reads the fixed point representation from the register
-        offset, then converts it into a more native python experience.The
-        numeric value is returned as pythons Decimal. If the register has
-        the overflow status enabled the return value is a tuple, where the
-        first element is a bool for the overflow status, and the second is the
-        decimal value.
+        """ Reads the fixed point value from the register and returns it as
+        a Decimal. If the register has the overflow status enabled, then it
+        returns a tuple with a bool for the overflow status, and a Decimal.
 
         Returns:
             decimal.Decimal: Decimal representation of the fixed point number.
@@ -574,7 +577,8 @@ class _FxpRegister(_Register):
         return data & (2**(self._word_length) - 1)
 
     def _integer_twos_comp(self, data):
-        if (data & (1 << (self._word_length - 1))) != 0:
+        signed_bit_mask = 2**(self._word_length - 1)
+        if data & signed_bit_mask > 0:
             data = data ^ (2 ** (self._word_length) - 1)
             data += 1
             data *= -1
@@ -624,7 +628,12 @@ class _FxpRegister(_Register):
         overflow = None
         data = None
         if self._overflow_enabled:
-            (overflow, data) = user_input
+            try:
+                (overflow, data) = user_input
+            except TypeError:
+                overflow = False
+                data = user_input
+                warn("Using default value 'False' for overflow status.")
             assert isinstance(overflow, bool)
         else:
             data = user_input

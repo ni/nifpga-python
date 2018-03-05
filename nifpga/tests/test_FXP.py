@@ -161,7 +161,7 @@ class FXPRegister15bitWord15bitIntegerOverflow(FXPRegisterSharedTests):
                                          + 2**(4) + 2**(2) + 2**(1)))
 
     def test_converting_user_data_without_overflow_raises(self):
-        with self.assertRaises(TypeError):
+        with assert_warns(UserWarning):
             self.testRegister. \
                 _convert_user_input_to_fxp_representation(self.user_value[1])
 

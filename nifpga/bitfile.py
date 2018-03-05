@@ -73,7 +73,7 @@ class Bitfile(object):
 
     def create_register(self, xml):
         if self._is_register_fxp(xml):
-            return Fxp_Register(xml)
+            return FxpRegister(xml)
         else:
             return Register(xml)
 
@@ -184,13 +184,13 @@ class Register(object):
                 "\tOffset: %d\n" % self._offset)
 
 
-class Fxp_Register(Register):
+class FxpRegister(Register):
     """
     A fixed point control or indicator from the front panel of the top level
     FPGA VI.
     """
     def __init__(self, reg_xml):
-        super(Fxp_Register, self).__init__(reg_xml)
+        super(FxpRegister, self).__init__(reg_xml)
         datatype = reg_xml.find("Datatype")
         fxp_xml = datatype.find("FXP")
         self._signed = True if fxp_xml.find("Signed").text.lower() == 'true' else False
