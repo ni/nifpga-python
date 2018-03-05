@@ -3,6 +3,7 @@ import warnings
 import xml.etree.ElementTree as ElementTree
 from nifpga import DataType
 
+
 class Bitfile(object):
     """ Class that represents the contents of the .lvbitx file.
 
