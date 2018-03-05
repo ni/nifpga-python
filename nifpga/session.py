@@ -422,24 +422,24 @@ class _ArrayRegister(_Register):
 class _FxpRegister(_Register):
     """
     _FxpRegister is a private class that does all the work of converting the
-    LabVIEW fixed point data type into something more native to python. This
-    implementation will return the Decimal type when calling read(), but should
-    be able to handle any native python data types when writing.
+    LabVIEW fixed point data type into something more native to python. As a
+    user you will read and write to this register just as you would any other
+    register. Given the nature of fixed point there are a few caveats.
 
-    Just like the other Registers we do not support users creating their
-    instances of _FxpRegister, but all of the fixed point registers from a
-    given bitfile will exist under the sessions.register property.
+    Just like the other registers, we do not support users creating their
+    instances of _FxpRegister, but after opening a session to a valid bitfile
+    the session.registers property will contain all registers fixed point
+    included.
 
     Fixed point registers should be easily used from python with a few caveats:
-        1. Trying to write data that does not conform to boundaries of the
-        defined register, will be coerced and the user will be warned. This is
-        either data outside the maximum and minimum values, or data that is not
-        a multiple of the delta.
-        2. Using Read() and Write() will only return the numerically values of
-        a fixed point register. In order to access the overflow status bit,
-        users must call the overflow attribute on the Register. The register
-        will only have a set overflow status given, the Register has been
-        enabled, and has at least been read from or written to before.
+        1. Trying to write a value that does not conform to boundaries of the
+        defined register, will be coerced just as it would in labVIEW. Input
+        a value that needs to be coerced will result in a warning to the user.
+        A value is to be coerced if it is not a multiple of the delta value, or
+        if it exceeds the minimum or maximum values.
+        2. When writing to fixed point registers with the overflow status
+        enabled, you must pass in the tuple (overflow bool, value). Failing to
+        pass in the overflow boolean will raise an exception.
     """
     def __init__(self,
                  session,
@@ -463,31 +463,30 @@ class _FxpRegister(_Register):
         self._ctype_type = self._ctype_type * self._transfer_len
 
     def _calculate_delta(self):
-        """ The value represented in the bitfile for delta is not always
-        correct, therefore we must calculate it ourselves.
+        """ The value persisted in the bitfile for delta is not always
+        correct, therefore we must calculate it manually.
         """
         return Decimal(2**(self._integer_word_length - self._word_length))
 
-    def _calculate_maximum(self):
-        """ The value represented in the bitfile for the maximum FXP value.
-        The xml on the bitfile is not always accurate, therefore we must
-        calculate it ourselves.
-        """
-        if self._signed:
-            magnitude_bits = self._word_length - 1
-        else:
-            magnitude_bits = self._word_length
-        return (2**(magnitude_bits) - 1) * self._delta
-
     def _calculate_minimum(self):
-        """ The value represented in the bitfile for the minimum FXP value is
-        not always correct, therefore we must calculate it ourselves.
+        """ The value persisted in the bitfile for the minimum value is
+        not always accurate, therefore we must calculate it manually.
         """
         if self._signed:
             magnitude_bits = self._word_length - 1
             return -1 * (2**(magnitude_bits) * self._delta)
         else:
             return 0
+
+    def _calculate_maximum(self):
+        """ The value persisted in the bitfile for the maximum value is not
+        always accurate, therefore we must calculate it manually.
+        """
+        if self._signed:
+            magnitude_bits = self._word_length - 1
+        else:
+            magnitude_bits = self._word_length
+        return (2**(magnitude_bits) - 1) * self._delta
 
     def _calculate_transfer_len(self):
         """ Fixed point values are transfered to the driver as an array of U32
@@ -505,11 +504,11 @@ class _FxpRegister(_Register):
 
     def read(self):
         """ Reads the fixed point representation from the register
-        offset then converts it into a datatype more useful in python. For
-        a fixed point register without overflow status enabled this would be
-        as decimal.Decimal. If overflow status enabled the return value is a
-        tuple, where the first element is a bool for the overflow status, and
-        second element is a decimal.Decimal
+        offset, then converts it into a more native python experience.The
+        numeric value is returned as pythons Decimal. If the register has
+        the overflow status enabled the return value is a tuple, where the
+        first element is a bool for the overflow status, and the second is the
+        decimal value.
 
         Returns:
             decimal.Decimal: Decimal representation of the fixed point number.
@@ -518,13 +517,21 @@ class _FxpRegister(_Register):
                                      representation of the fixed point number.
         """
         buf = self._ctype_type()
-
         self._read_func(self._session, self._resource, buf, self._transfer_len)
         read_array = [elem for elem in buf]
         fxp_integer = self._combine_array_of_u32_into_one_value(read_array)
         return self._convert_from_read_value_to_decimal(fxp_integer)
 
     def _combine_array_of_u32_into_one_value(self, data):
+        """ This method is a helper to convert the array read from hardware
+        and return a single value removing any excessive bits. Because the
+        significant bits are left associated we need to shift the the combined
+        data to the right.
+        For example, if the register had a word length of 54, the 54 MSB would
+        be the fixed point bits. The 10 LSB of the combinedData must be shifted
+        off in order to not mess up further calculations.
+
+        """
         combinedData = 0
         for index in range(0, self._transfer_len):
             combinedData = (combinedData << 32) + data[index]
@@ -535,9 +542,10 @@ class _FxpRegister(_Register):
         return combinedData
 
     def _convert_from_read_value_to_decimal(self, data):
-        """ This function converts read value from a RIO device and sets
-        the overflow bit if enabled and returns a Decimal representation of
-        the fixed point. """
+        """ This method converts value from hardware and returns the respective
+        decimal value or a tuple with the overflow status and the decimal
+        value.
+        """
         overflow = None
         if self._overflow_enabled:
             overflow = self._get_overflow_value(data)
@@ -554,15 +562,15 @@ class _FxpRegister(_Register):
     def _get_overflow_value(self, data):
         """ Mask out all the data within the word length, leaving the overflow
         bit. If the result after masking the the word portion of the fixed
-        point is none zero that indicates the data read has overflown."""
+        point is none zero that indicates the data read has overflowed. """
         mask = 2**(self._word_length)
         if data & mask > 0:
             return True
         return False
 
     def _remove_overflow_bit(self, data):
-        """ This helper function masks out all bits not inside the word length,
-        ultimately returning a value of data missing the overflow bit. """
+        """ This helper method masks out all bits not inside the word length,
+        ultimately returning a value of data without the overflow bit. """
         return data & (2**(self._word_length) - 1)
 
     def _integer_twos_comp(self, data):
@@ -573,17 +581,16 @@ class _FxpRegister(_Register):
         return data
 
     def write(self, user_input):
-        """ Converts the passed in argument into fixed point representation
-        and then writes it into the register.
+        """ Writes the user's the users input into the register as a fixed
+        point number. Any inputs outside the bounds of this fixed point
+        register will be coerced and the user will be warned. The user input's
+        supported include any python Number.
 
             Args:
-                data (any python datatype): The data to be written into the
-                register. This method will coerce the value to the nearest
-                possible fixed point representation.
-
-                self.overflow: Registers with overflow enabled will write the
-                value of the attribute into the register. Users should set this
-                attribute on the the register before calling write.
+                Number: user numerical input to be converted to fixed point.
+                (bool, Number): Tuple with the members : Boolean for overflow,
+                                user numerical input to be converted to fixed
+                                point.
         """
 
         fxp_representation = self._convert_user_input_to_fxp_representation(user_input)
@@ -592,7 +599,6 @@ class _FxpRegister(_Register):
         self._write_func(self._session, self._resource, buf, self._transfer_len)
 
     def _convert_user_input_to_fxp_representation(self, user_input):
-        """ """
         (overflow, data) = self._validate_and_parse_user_input(user_input)
 
         fxp_representation = 0
@@ -634,9 +640,9 @@ class _FxpRegister(_Register):
     def _convert_value_to_fxp(self, data):
         calculated_fxp = Decimal(data) / Decimal(self._delta)
         fxp_representation = int(calculated_fxp)
-        """ If the result of the division is not an integer we lost some of
-        the input data warn the user that we had to coerce the value to the
-        nearest fixed point representation. """
+        """ If the result of the division is not an integer, we lost some of
+        the input data. In this case we warn the user that we had to coerce the
+        value to the nearest fixed point representation. """
         if fxp_representation != calculated_fxp:
             self.warn_coerced_data()
         return fxp_representation
@@ -654,11 +660,6 @@ class _FxpRegister(_Register):
             data = data >> 32
         extracted_array.reverse()
         return extracted_array
-
-    def _check_overflow_attribute_is_set(self):
-        if not hasattr(self, "overflow"):
-            warn("Attempting to write without the overflow bit set, defaulting to False")
-            self.overflow = False
 
     def warn_coerced_data(self):
         warn("The inputed value was not able to be converted to FXP, without coercion. ")
