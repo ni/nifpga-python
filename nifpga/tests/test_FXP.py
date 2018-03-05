@@ -167,7 +167,6 @@ class FXPRegister15bitWord15bitIntegerOverflow(FXPRegisterSharedTests):
                                                           fxp_with_false_overflow)
 
 
-
 class FXPRegister15bitWord15bitIntegerSignedOverflow(FXPRegisterSharedTests):
     def setUp(self):
         self.testRegister = MockFxpRegister(signed=True,
