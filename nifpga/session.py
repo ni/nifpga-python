@@ -624,13 +624,7 @@ class _FxpRegister(_Register):
         overflow = None
         data = None
         if self._overflow_enabled:
-            try:
-                (overflow, data) = user_input
-            except TypeError as e:
-                e.message += "FXP registers with overflow input is a tuple," \
-                             "where the first element is overflow status and" \
-                             "second in the fixed point value."
-                raise
+            (overflow, data) = user_input
             assert isinstance(overflow, bool)
         else:
             data = user_input
