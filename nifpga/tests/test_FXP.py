@@ -64,6 +64,8 @@ def _calculate_maximum_fxp_value(register):
     else:
         magnitude_bits = register._word_length
     return (2**(magnitude_bits) - 1)
+
+
 """ These are a couple of arbitrary binary strings that the following unit
 to test a non random value.
 """
@@ -142,8 +144,8 @@ class FXPRegister16bitWord16bitIntegerSigned(FXPRegisterSharedTests):
                                             integer_word_length=16)
         self.FxpAssert = FXPRegisterAsserts(self)
         self.fxp_value = int(binary_string_16bit, 2)
-        self.user_value = Decimal((-1)*(2**(12) + 2**(11) + 2**(9) + 2**(8)
-                                        + 2**(6) + 2**(5) + 2**(3) + 2**(1)))
+        self.user_value = Decimal((-1) * (2**(12) + 2**(11) + 2**(9) + 2**(8)
+                                          + 2**(6) + 2**(5) + 2**(3) + 2**(1)))
 
 
 class FXPRegister15bitWord15bitIntegerOverflow(FXPRegisterSharedTests):
@@ -172,9 +174,9 @@ class FXPRegister15bitWord15bitIntegerSignedOverflow(FXPRegisterSharedTests):
                                             integer_word_length=15)
         self.FxpAssert = FXPRegisterAsserts(self)
         self.fxp_value = int(binary_string_16bit, 2)
-        self.user_value = (True, Decimal((-1)*(2**(12) + 2**(11) + 2**(9)
-                                               + 2**(8) + 2**(6) + 2**(5)
-                                               + 2**(3) + 2**(1))))
+        self.user_value = (True, Decimal((-1) * (2**(12) + 2**(11) + 2**(9)
+                                                 + 2**(8) + 2**(6) + 2**(5)
+                                                 + 2**(3) + 2**(1))))
 
     def test_overflow_bit_is_not_calculated_in_twos_compliment(self):
         # Create a 15 bit word that is all 1's
@@ -196,8 +198,7 @@ class FXPRegister16bitWord0bitInteger(FXPRegisterSharedTests):
         self.FxpAssert = FXPRegisterAsserts(self)
         self.fxp_value = int(binary_string_16bit, 2)
         self.user_value = Decimal(2**(-1) + 2**(-2) + 2**(-3) + 2**(-6)
-                                  + 2**(-9) + 2**(-12) + 2**(-14)
-                                  + 2**(-15))
+                                  + 2**(-9) + 2**(-12) + 2**(-14) + 2**(-15))
 
 
 class FXPRegister15bitWord0bitIntegerOverflow(FXPRegisterSharedTests):
@@ -220,9 +221,9 @@ class FXPRegister15bitWord0bitIntegerSignedOverflow(FXPRegisterSharedTests):
                                             integer_word_length=0)
         self.FxpAssert = FXPRegisterAsserts(self)
         self.fxp_value = int(binary_string_16bit, 2)
-        self.user_value = (True, Decimal((-1)*(2**(-3) + 2**(-4) + 2**(-6)
-                                               + 2**(-7) + 2**(-9) + 2**(-10)
-                                               + 2**(-12) + 2**(-14))))
+        self.user_value = (True, Decimal((-1) * (2**(-3) + 2**(-4) + 2**(-6)
+                                                 + 2**(-7) + 2**(-9) + 2**(-10)
+                                                 + 2**(-12) + 2**(-14))))
 
 
 class FXPRegister32bitWord16bitIntegerOverflow(FXPRegisterSharedTests):

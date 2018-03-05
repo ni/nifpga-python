@@ -2,8 +2,6 @@ import os
 import warnings
 import xml.etree.ElementTree as ElementTree
 from nifpga import DataType
-from math import ceil
-
 
 class Bitfile(object):
     """ Class that represents the contents of the .lvbitx file.
