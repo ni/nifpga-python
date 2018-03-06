@@ -28,7 +28,7 @@ class Bitfile(object):
         self._base_address_on_device = int(nifpga.find("BaseAddressOnDevice").text)
         self._registers = {}
         for reg_xml in tree.find("VI").find("RegisterList"):
-            reg = Register(reg_xml)
+            reg = self.create_register(reg_xml)
             if reg.datatype is not None:
                 assert reg.name not in self._registers, \
                     "One or more registers have the same name '%s', this is not supported" % reg.name
@@ -70,6 +70,19 @@ class Bitfile(object):
         base_address_on_device + register_offset
         """
         return self._base_address_on_device
+
+    def create_register(self, xml):
+        if self._is_register_fxp(xml):
+            return FxpRegister(xml)
+        else:
+            return Register(xml)
+
+    def _is_register_fxp(self, reg_xml):
+        datatype = reg_xml.find("Datatype")
+        for child in datatype.getchildren():
+            if str(DataType.Fxp).lower() not in child.tag.lower():
+                return False
+        return True
 
 
 class Register(object):
@@ -169,6 +182,40 @@ class Register(object):
                 "\tType: %s\n" % self._datatype +
                 "\tNum Elements: %d\n" % len(self) +
                 "\tOffset: %d\n" % self._offset)
+
+
+class FxpRegister(Register):
+    """
+    A fixed point control or indicator from the front panel of the top level
+    FPGA VI.
+    """
+    def __init__(self, reg_xml):
+        super(FxpRegister, self).__init__(reg_xml)
+        datatype = reg_xml.find("Datatype")
+        fxp_xml = datatype.find("FXP")
+        self._signed = True if fxp_xml.find("Signed").text.lower() == 'true' else False
+        self._overflow = True if fxp_xml.find("IncludeOverflowStatus").text.lower() == 'true' else False
+        self._word_length = int(fxp_xml.find("WordLength").text)
+        self._integer_word_length = int(fxp_xml.find("IntegerWordLength").text)
+
+    def __len__(self):
+        return 1
+
+    @property
+    def signed(self):
+        return self._signed
+
+    @property
+    def word_length(self):
+        return self._word_length
+
+    @property
+    def integer_word_length(self):
+        return self._integer_word_length
+
+    @property
+    def overflow(self):
+        return self._overflow
 
 
 class Fifo(object):

@@ -8,6 +8,6 @@ install:
   - "pip install flake8"
   - "pip install -r requirements.txt"
 before_script:
-  - "flake8 nifpga --ignore=E501"
+  - "flake8 nifpga --ignore=E501,W503 "
 script:
   - "nosetests --with-doctest"

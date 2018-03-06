@@ -9,12 +9,16 @@ from .nifpga import (_SessionType, _IrqContextType, _NiFpga, DataType,
                      CLOSE_ATTRIBUTE_NO_RESET_IF_LAST_SESSION, FifoProperty,
                      _fifo_properties_to_types, FlowControl, DmaBufferType,
                      FpgaViState)
-from .bitfile import Bitfile
+from .bitfile import Bitfile, FxpRegister
 from .status import InvalidSessionError
 from collections import namedtuple
 import ctypes
 from builtins import bytes
+from decimal import Decimal
+from math import ceil
+from numbers import Number
 from future.utils import iteritems
+from warnings import warn
 
 
 class Session(object):
@@ -30,7 +34,6 @@ class Session(object):
 
         with Session(bitfile="myBitfilePath.lvbitx", resource="RIO0") as session:
             session.run()
-            FpgaAlreadyRunningWarning: pass
             session.download()
             session.abort()
             session.reset()
@@ -115,22 +118,12 @@ class Session(object):
         for name, bitfile_register in iteritems(bitfile.registers):
             assert name not in self._registers, \
                 "One or more registers have the same name '%s', this is not supported" % name
-            if bitfile_register.is_array():
-                array_register = _ArrayRegister(self._session, self._nifpga,
-                                                bitfile_register,
-                                                base_address_on_device)
-                if bitfile_register.is_internal():
-                    self._internal_registers_dict[name] = array_register
-                else:
-                    self._registers[name] = array_register
-
+            register = self._create_register(bitfile_register,
+                                             base_address_on_device)
+            if bitfile_register.is_internal():
+                self._internal_registers_dict[name] = register
             else:
-                register = _Register(self._session, self._nifpga,
-                                     bitfile_register, base_address_on_device)
-                if bitfile_register.is_internal():
-                    self._internal_registers_dict[name] = register
-                else:
-                    self._registers[name] = register
+                self._registers[name] = register
 
         self._fifos = {}
         for name, bitfile_fifo in iteritems(bitfile.fifos):
@@ -264,7 +257,7 @@ class Session(object):
 
     @property
     def _internal_registers(self):
-        """ This property contains interal regis"""
+        """ This property contains internal registers"""
         return self._internal_registers_dict
 
     @property
@@ -274,6 +267,24 @@ class Session(object):
         accessed by its unique name.
         """
         return self._fifos
+
+    def _create_register(self, bitfile_register, base_address_on_device):
+
+        if bitfile_register.is_array():
+            return _ArrayRegister(self._session,
+                                  self._nifpga,
+                                  bitfile_register,
+                                  base_address_on_device)
+        elif isinstance(bitfile_register, FxpRegister):
+            return _FxpRegister(self._session,
+                                self._nifpga,
+                                bitfile_register,
+                                base_address_on_device)
+        else:  # default register
+            return _Register(self._session,
+                             self._nifpga,
+                             bitfile_register,
+                             base_address_on_device)
 
 
 class _Register(object):
@@ -286,12 +297,24 @@ class _Register(object):
     of this class.
 
     """
-    def __init__(self, session, nifpga, bitfile_register, base_address_on_device):
+    def __init__(self,
+                 session,
+                 nifpga,
+                 bitfile_register,
+                 base_address_on_device,
+                 read_func=None,
+                 write_func=None):
         self._datatype = bitfile_register.datatype
         self._name = bitfile_register.name
         self._session = session
-        self._write_func = nifpga["Write%s" % self._datatype]
-        self._read_func = nifpga["Read%s" % self._datatype]
+        if read_func is None:
+            self._read_func = nifpga["Read%s" % self.datatype]
+        else:
+            self._read_func = read_func
+        if write_func is None:
+            self._write_func = nifpga["Write%s" % self.datatype]
+        else:
+            self._write_func = write_func
         self._ctype_type = self._datatype._return_ctype()
         self._resource = bitfile_register.offset + base_address_on_device
         if bitfile_register.access_may_timeout():
@@ -351,11 +374,11 @@ class _ArrayRegister(_Register):
         super(_ArrayRegister, self).__init__(session,
                                              nifpga,
                                              bitfile_register,
-                                             base_address_on_device)
+                                             base_address_on_device,
+                                             read_func=nifpga["ReadArray%s" % bitfile_register.datatype],
+                                             write_func=nifpga["WriteArray%s" % bitfile_register.datatype])
         self._num_elements = len(bitfile_register)
         self._ctype_type = self._ctype_type * self._num_elements
-        self._write_func = nifpga["WriteArray%s" % self._datatype]
-        self._read_func = nifpga["ReadArray%s" % self._datatype]
 
     def __len__(self):
         """ Returns the length of the array.
@@ -391,7 +414,255 @@ class _ArrayRegister(_Register):
         """
         buf = self._ctype_type()
         self._read_func(self._session, self._resource, buf, len(self))
-        return [bool(elem) if self._datatype is DataType.Bool else elem for elem in buf]
+        val = [bool(elem) if self._datatype is DataType.Bool else elem for elem in buf]
+        return val
+
+
+class _FxpRegister(_Register):
+    """
+    _FxpRegister is a private class that does all the work of converting the
+    LabVIEW fixed point data type into something more native to python. As a
+    user you will read and write to this register just as you would any other
+    register. Given the nature of fixed point there are a few caveats.
+
+    Just like the other registers, we do not support users creating their
+    instances of _FxpRegister, but after opening a session to a valid bitfile
+    the session.registers property will contain all registers fixed point
+    included.
+
+    Fixed point registers should be easily used from python with a few caveats:
+        1. Trying to write a value that does not conform to boundaries of the
+        defined register, will be coerced just as it would in labVIEW. Input
+        a value that needs to be coerced will result in a warning to the user.
+        A value is to be coerced if it is not a multiple of the delta value, or
+        if it exceeds the minimum or maximum values.
+    """
+    def __init__(self,
+                 session,
+                 nifpga,
+                 bitfile_register,
+                 base_address_on_device):
+        super(_FxpRegister, self).__init__(session,
+                                           nifpga,
+                                           bitfile_register,
+                                           base_address_on_device,
+                                           read_func=nifpga["ReadArray%s" % DataType.U32],
+                                           write_func=nifpga["WriteArray%s" % DataType.U32])
+        self._word_length = bitfile_register.word_length
+        self._integer_word_length = bitfile_register.integer_word_length
+        self._overflow_enabled = bitfile_register.overflow
+        self._signed = bitfile_register.signed
+        self._delta = self._calculate_delta()
+        self._minimum = self._calculate_minimum()
+        self._maximum = self._calculate_maximum()
+        self._transfer_len = self._calculate_transfer_len()
+        self._ctype_type = self._ctype_type * self._transfer_len
+
+    def _calculate_delta(self):
+        """ Determines the fixed point delta value, the value of the register
+        is only allowed to be an integer multiple of the delta. For example if
+        delta is 1, then it is impossible to represent a fraction.
+        The value persisted in the bitfile for delta is not always correct,
+        therefore we must calculate it manually.
+        """
+        return Decimal(2**(self._integer_word_length - self._word_length))
+
+    def _calculate_minimum(self):
+        """ Determines the minimum possible value that can be represented with
+        the given fixed point register. The value persisted in the bitfile for
+        the minimum value is not always accurate, therefore we must calculate
+        it manually.
+        """
+        if self._signed:
+            magnitude_bits = self._word_length - 1
+            return -1 * (2**(magnitude_bits) * self._delta)
+        else:
+            return 0
+
+    def _calculate_maximum(self):
+        """ Determines the minimum possible value that can be represented with
+        the given fixed point register.The value persisted in the bitfile for
+        the maximum value is not always accurate, therefore we must calculate
+        it manually.
+        """
+        if self._signed:
+            magnitude_bits = self._word_length - 1
+        else:
+            magnitude_bits = self._word_length
+        return (2**(magnitude_bits) - 1) * self._delta
+
+    def _calculate_transfer_len(self):
+        """ Fixed point values are transfered to the driver as an array of U32
+        The length is between 1 and 3 determined by the word length (includes
+        the signed bit) plus the include_overflow_status_enable bit.
+        """
+        bits_required = self._word_length
+        if self._overflow_enabled:
+            """ If overflow status is enabled we need an extra bit. """
+            bits_required += 1
+        return int(ceil(bits_required / 32.0))
+
+    def read(self):
+        """ Reads the fixed point value from the register and returns it as
+        a Decimal. If the register has the overflow status enabled, then it
+        returns a tuple with a bool for the overflow status, and a Decimal.
+
+        Returns:
+            decimal.Decimal: Decimal representation of the fixed point number.
+        Returns:
+            (bool, decimal.Decimal): Boolean for overflow, Decimal
+                                     representation of the fixed point number.
+        """
+        buf = self._ctype_type()
+        self._read_func(self._session, self._resource, buf, self._transfer_len)
+        read_array = [elem for elem in buf]
+        fxp_integer = self._combine_array_of_u32_into_one_value(read_array)
+        return self._convert_from_read_value_to_decimal(fxp_integer)
+
+    def _combine_array_of_u32_into_one_value(self, data):
+        """ This method is a helper to convert the array read from hardware
+        and return a single value removing any excessive bits. Whenever
+        the array is longer than 1 element, the data is left justified, we need
+        to shift the combined data to the right before doing the conversion.
+        For example, if the register had a word length of 54, the 54 MSB would
+        be the fixed point bits. The 10 LSB of the combinedData must be shifted
+        off in order to not mess up further calculations.
+
+        """
+        combinedData = 0
+        for index in range(0, self._transfer_len):
+            combinedData = (combinedData << 32) + data[index]
+        if self._transfer_len > 1:
+            overflow_bit = 1 if self._overflow_enabled else 0
+            total_num_bits = self._word_length + overflow_bit
+            combinedData = combinedData >> (32 * self._transfer_len - total_num_bits)
+        return combinedData
+
+    def _convert_from_read_value_to_decimal(self, data):
+        """ This method converts value from hardware and returns the respective
+        decimal value or a tuple with the overflow status and the decimal
+        value.
+        """
+        overflow = None
+        if self._overflow_enabled:
+            overflow = self._get_overflow_value(data)
+            data = self._remove_overflow_bit(data)
+
+        if self._signed:
+            data = self._integer_twos_comp(data)
+        decimal_value = Decimal(data * self._delta)
+        if self._overflow_enabled:
+            return (overflow, decimal_value)
+        else:
+            return decimal_value
+
+    def _get_overflow_value(self, data):
+        """ Mask out all the data within the word length, leaving the overflow
+        bit. If the result after masking the the word portion of the fixed
+        point is nonzero that indicates the data read has overflowed. """
+        mask = 2**(self._word_length)
+        if data & mask > 0:
+            return True
+        return False
+
+    def _remove_overflow_bit(self, data):
+        """ This helper method masks out all bits not inside the word length,
+        ultimately returning a value of data without the overflow bit. """
+        return data & (2**(self._word_length) - 1)
+
+    def _integer_twos_comp(self, data):
+        """ Checks the signed bit and determines if the value is negative, If
+        so take the twos complement of the input."""
+        signed_bit_mask = 2**(self._word_length - 1)
+        if data & signed_bit_mask > 0:
+            data = data ^ (2 ** (self._word_length) - 1)
+            data += 1
+            data *= -1
+        return data
+
+    def write(self, user_input):
+        """ Writes the user's the users input into the register as a fixed
+        point number. Any inputs outside the bounds of this fixed point
+        register will be coerced and the user will be warned. The user input's
+        supported include any python Number.
+
+            Args:
+                Number: user numerical input to be converted to fixed point.
+                (bool, Number): Tuple with the members : Boolean for overflow,
+                                user numerical input to be converted to fixed
+                                point.
+        """
+
+        fxp_representation = self._convert_user_input_to_fxp_representation(user_input)
+        arrayData = self._extract_array_of_u32_from_fxp_value(fxp_representation)
+        buf = self._ctype_type(*arrayData)
+        self._write_func(self._session, self._resource, buf, self._transfer_len)
+
+    def _convert_user_input_to_fxp_representation(self, user_input):
+        (overflow, data) = self._validate_and_parse_user_input(user_input)
+
+        fxp_representation = 0
+        if data < self._minimum:
+            fxp_representation = self._convert_value_to_fxp(self._minimum)
+            self.warn_coerced_data()
+        elif data > self._maximum:
+            fxp_representation = self._convert_value_to_fxp(self._maximum)
+            self.warn_coerced_data()
+        else:
+            fxp_representation = self._convert_value_to_fxp(data)
+
+        if self._signed and data < 0:
+            fxp_representation = self._integer_twos_comp(fxp_representation)
+
+        if self._overflow_enabled:
+            if overflow:
+                fxp_representation += 2**(self._word_length)
+
+        return fxp_representation
+
+    def _validate_and_parse_user_input(self, user_input):
+        overflow = None
+        data = None
+        if self._overflow_enabled:
+            try:
+                (overflow, data) = user_input
+            except TypeError:
+                """ If the user does not input any overflow status, eat the
+                exception and use default value of False. """
+                overflow = False
+                data = user_input
+            assert isinstance(overflow, bool)
+        else:
+            data = user_input
+        assert isinstance(data, Number)
+        return (overflow, data)
+
+    def _convert_value_to_fxp(self, data):
+        calculated_fxp = Decimal(data) / Decimal(self._delta)
+        fxp_representation = int(calculated_fxp)
+        """ If the result of the division is not an integer, we lost some of
+        the input data. In this case we warn the user that we had to coerce the
+        value to the nearest fixed point representation. """
+        if fxp_representation != calculated_fxp:
+            self.warn_coerced_data()
+        return fxp_representation
+
+    def _extract_array_of_u32_from_fxp_value(self, data):
+        if self._transfer_len > 1:
+            overflow_bit = 1 if self._overflow_enabled else 0
+            total_num_bits = self._word_length + overflow_bit
+            data = data << (32 * self._transfer_len - total_num_bits)
+
+        mask_32bit = (2**32) - 1
+        extracted_array = []
+        for index in range(0, self._transfer_len):
+            extracted_array.append(data & mask_32bit)
+            data = data >> 32
+        extracted_array.reverse()
+        return extracted_array
+
+    def warn_coerced_data(self):
+        warn("The inputed value was not able to be converted to FXP, without coercion. ")
 
 
 class _FIFO(object):

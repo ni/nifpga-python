@@ -26,6 +26,7 @@ class DataType(Enum):
     U64 = 9
     Sgl = 10
     Dbl = 11
+    Fxp = 12
 
     def __str__(self):
         return self.name
@@ -44,6 +45,7 @@ class DataType(Enum):
             DataType.U64: ctypes.c_uint64,
             DataType.Sgl: ctypes.c_float,
             DataType.Dbl: ctypes.c_double,
+            DataType.Fxp: ctypes.c_uint32,
         }
         return _datatype_ctype[self]
 
@@ -369,6 +371,8 @@ class _NiFpga(StatusCheckedLibrary):
         ]  # list of function_infos
 
         for datatype in DataType:
+            if datatype == DataType.Fxp:
+                continue  # Fixed point does not have read write entry points.
             type_ctype = datatype._return_ctype()
             library_function_infos.extend([
                 LibraryFunctionInfo(
@@ -452,7 +456,6 @@ class _NiFpga(StatusCheckedLibrary):
                         NamedArgtype("elements remaining", ctypes.POINTER(ctypes.c_size_t)),
                     ]),
             ])  # end of library_function_infos.extend() call
-
         for fifoPropertyType in FifoPropertyType:
             type_ctype = fifoPropertyType._return_ctype()
             library_function_infos.extend([
@@ -475,6 +478,7 @@ class _NiFpga(StatusCheckedLibrary):
                         NamedArgtype("value", type_ctype),
                     ]),
             ])
+
         try:
             super(_NiFpga, self).__init__(library_name="NiFpga",
                                           library_function_infos=library_function_infos)
