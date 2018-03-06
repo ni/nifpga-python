@@ -559,7 +559,7 @@ class _FxpRegister(_Register):
     def _get_overflow_value(self, data):
         """ Mask out all the data within the word length, leaving the overflow
         bit. If the result after masking the the word portion of the fixed
-        point is none zero that indicates the data read has overflowed. """
+        point is nonzero that indicates the data read has overflowed. """
         mask = 2**(self._word_length)
         if data & mask > 0:
             return True
@@ -572,7 +572,7 @@ class _FxpRegister(_Register):
 
     def _integer_twos_comp(self, data):
         """ Checks the signed bit and determines if the value is negative, If
-        so take the twos compliment of the input."""
+        so take the twos complement of the input."""
         signed_bit_mask = 2**(self._word_length - 1)
         if data & signed_bit_mask > 0:
             data = data ^ (2 ** (self._word_length) - 1)
