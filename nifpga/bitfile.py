@@ -29,15 +29,17 @@ class Bitfile(object):
         self._registers = {}
         for reg_xml in tree.find("VI").find("RegisterList"):
             reg = self.create_register(reg_xml)
-            if reg.datatype is not None:
+            if reg is not None or reg.datatype is not None:
                 assert reg.name not in self._registers, \
                     "One or more registers have the same name '%s', this is not supported" % reg.name
                 self._registers[reg.name] = reg
 
         self._fifos = {}
         for channel_xml in nifpga.find("DmaChannelAllocationList"):
-            fifo = Fifo(channel_xml)
-            self._fifos[fifo.name] = fifo
+            """ The Python API does not yet support FXP Fifos. """
+            if not self._is_fifo_fxp(channel_xml):
+                fifo = Fifo(channel_xml)
+                self._fifos[fifo.name] = fifo
 
     @property
     def filepath(self):
@@ -73,7 +75,12 @@ class Bitfile(object):
 
     def create_register(self, xml):
         if self._is_register_fxp(xml):
-            return FxpRegister(xml)
+            fxp_register = FxpRegister(xml)
+            if fxp_register.is_array():
+                """ The Python API does not yet support FXP Arrays. """
+                return None
+            else:
+                return fxp_register
         else:
             return Register(xml)
 
@@ -82,6 +89,12 @@ class Bitfile(object):
         for child in datatype.getchildren():
             if str(DataType.Fxp).lower() not in child.tag.lower():
                 return False
+        return True
+
+    def _is_fifo_fxp(self, channel_xml):
+        datatype = channel_xml.find("DataType").find("SubType").text.title()
+        if str(DataType.Fxp).lower() not in datatype.lower():
+            return False
         return True
 
 
