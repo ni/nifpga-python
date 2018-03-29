@@ -21,10 +21,10 @@ class BitfileTest(unittest.TestCase):
         with open(BITFILE_FXP_TYPES, 'r') as f:
             bitfile = nifpga.Bitfile(f.read(), parse_contents=True)
             with self.assertRaises(KeyError):
-                bitfile.fifos["FXP Fifo"]
+                bitfile.fifos["FXP FIFO"]
 
     def test_parse_bitfile_with_fxp_register_array(self):
         with open(BITFILE_FXP_TYPES, 'r') as f:
             bitfile = nifpga.Bitfile(f.read(), parse_contents=True)
             with self.assertRaises(KeyError):
-                bitfile.register["FXP Array"]
+                bitfile.registers["FXP Array"]
