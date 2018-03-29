@@ -187,6 +187,9 @@ class Session(object):
             bitmask |= (1 << ordinal)
         return bitmask
 
+    WaitOnIrqsReturnValues = namedtuple('WaitOnIrqsReturnValues',
+                                        ["irqs_asserted", "timed_out"])
+
     def wait_on_irqs(self, irqs, timeout_ms):
         """ Stops the calling thread until the FPGA asserts any IRQ in the irqs
         parameter or until the function call times out.
@@ -223,10 +226,8 @@ class Session(object):
         finally:
             self._nifpga.UnreserveIrqContext(self._session, context)
         irqs_asserted = [i for i in range(32) if irqs_asserted_bitmask.value & (1 << i)]
-        WaitOnIrqsReturnValues = namedtuple('WaitOnIrqsReturnValues',
-                                            ["irqs_asserted", "timed_out"])
-        return WaitOnIrqsReturnValues(irqs_asserted=irqs_asserted,
-                                      timed_out=bool(timed_out.value))
+        return self.WaitOnIrqsReturnValues(irqs_asserted=irqs_asserted,
+                                           timed_out=bool(timed_out.value))
 
     def acknowledge_irqs(self, irqs):
         """ Acknowledges an IRQ or set of IRQs.
@@ -744,6 +745,8 @@ class _FIFO(object):
                          empty_elements_remaining)
         return empty_elements_remaining.value
 
+    ReadValues = namedtuple("ReadValues", ["data", "elements_remaining"])
+
     def read(self, number_of_elements, timeout_ms=0):
         """ Read the specified number of elements from the FIFO.
 
@@ -774,10 +777,16 @@ class _FIFO(object):
                         number_of_elements,
                         timeout_ms,
                         elements_remaining)
-        data = [bool(elem) if self._datatype is DataType.Bool else elem for elem in buf]
-        ReadValues = namedtuple("ReadValues", ["data", "elements_remaining"])
-        return ReadValues(data=data,
-                          elements_remaining=elements_remaining.value)
+        if self._datatype is DataType.Bool:
+            data = [bool(elem) for elem in buf]
+        else:
+            data = [elem for elem in buf]
+        return self.ReadValues(data=data,
+                               elements_remaining=elements_remaining.value)
+
+    AcquireWriteValues = namedtuple("AcquireWriteValues",
+                                    ["data", "elements_acquired",
+                                     "elements_remaining"])
 
     def _acquire_write(self, number_of_elements, timeout_ms=0):
         """ Write the specified number of elements from the FIFO.
@@ -807,13 +816,13 @@ class _FIFO(object):
                                  timeout_ms,
                                  elements_acquired,
                                  elements_remaining)
+        return self.AcquireWriteValues(data=block_out,
+                                       elements_acquired=elements_acquired.value,
+                                       elements_remaining=elements_remaining.value)
 
-        AcquireWriteValues = namedtuple("AcquireWriteValues",
-                                        ["data", "elements_acquired",
-                                         "elements_remaining"])
-        return AcquireWriteValues(data=block_out,
-                                  elements_acquired=elements_acquired.value,
-                                  elements_remaining=elements_remaining.value)
+    AcquireReadValues = namedtuple("AcquireReadValues",
+                                   ["data", "elements_acquired",
+                                    "elements_remaining"])
 
     def _acquire_read(self, number_of_elements, timeout_ms=0):
         """ Read the specified number of elements from the FIFO.
@@ -844,12 +853,9 @@ class _FIFO(object):
                                 timeout_ms,
                                 elements_acquired,
                                 elements_remaining)
-        AcquireReadValues = namedtuple("AcquireReadValues",
-                                       ["data", "elements_acquired",
-                                        "elements_remaining"])
-        return AcquireReadValues(data=buf_ptr,
-                                 elements_acquired=elements_acquired.value,
-                                 elements_remaining=elements_remaining.value)
+        return self.AcquireReadValues(data=buf_ptr,
+                                      elements_acquired=elements_acquired.value,
+                                      elements_remaining=elements_remaining.value)
 
     def _release_elements(self, number_of_elements):
         """ Releases the FIFOs elements. """
