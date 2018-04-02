@@ -29,10 +29,11 @@ class Bitfile(object):
         self._registers = {}
         for reg_xml in tree.find("VI").find("RegisterList"):
             reg = self.create_register(reg_xml)
-            if reg is not None or reg.datatype is not None:
+            if reg.datatype is not None:
                 assert reg.name not in self._registers, \
                     "One or more registers have the same name '%s', this is not supported" % reg.name
-                self._registers[reg.name] = reg
+                if not reg.is_array():
+                    self._registers[reg.name] = reg
 
         self._fifos = {}
         for channel_xml in nifpga.find("DmaChannelAllocationList"):
@@ -76,16 +77,14 @@ class Bitfile(object):
     def create_register(self, xml):
         if self._is_register_fxp(xml):
             fxp_register = FxpRegister(xml)
-            if fxp_register.is_array():
-                """ The Python API does not yet support FXP Arrays. """
-                return None
-            else:
-                return fxp_register
+            return fxp_register
         else:
             return Register(xml)
 
     def _is_register_fxp(self, reg_xml):
         datatype = reg_xml.find("Datatype")
+        if datatype.find("Array") is not None:
+            datatype = datatype.find("Array").find("Type")
         for child in datatype.getchildren():
             if str(DataType.Fxp).lower() not in child.tag.lower():
                 return False
@@ -205,7 +204,10 @@ class FxpRegister(Register):
     def __init__(self, reg_xml):
         super(FxpRegister, self).__init__(reg_xml)
         datatype = reg_xml.find("Datatype")
-        fxp_xml = datatype.find("FXP")
+        if self.is_array():
+            fxp_xml = datatype.find("Array").find("Type").find("FXP")
+        else:
+            fxp_xml = datatype.find("FXP")
         self._signed = True if fxp_xml.find("Signed").text.lower() == 'true' else False
         self._overflow = True if fxp_xml.find("IncludeOverflowStatus").text.lower() == 'true' else False
         self._word_length = int(fxp_xml.find("WordLength").text)
