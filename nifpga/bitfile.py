@@ -32,7 +32,8 @@ class Bitfile(object):
             if reg.datatype is not None:
                 assert reg.name not in self._registers, \
                     "One or more registers have the same name '%s', this is not supported" % reg.name
-                if not reg.is_array() and reg.datatype is not DataType.Fxp:
+                # We don't yet support FXP Arrays
+                if not (reg.is_array() and reg.datatype is DataType.Fxp):
                     self._registers[reg.name] = reg
 
         self._fifos = {}
