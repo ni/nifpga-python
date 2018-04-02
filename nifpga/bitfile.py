@@ -32,12 +32,16 @@ class Bitfile(object):
             if reg.datatype is not None:
                 assert reg.name not in self._registers, \
                     "One or more registers have the same name '%s', this is not supported" % reg.name
-                self._registers[reg.name] = reg
+                # We don't yet support FXP Arrays
+                if not (reg.is_array() and reg.datatype is DataType.Fxp):
+                    self._registers[reg.name] = reg
 
         self._fifos = {}
         for channel_xml in nifpga.find("DmaChannelAllocationList"):
-            fifo = Fifo(channel_xml)
-            self._fifos[fifo.name] = fifo
+            """ The Python API does not yet support FXP Fifos. """
+            if not self._is_fifo_fxp(channel_xml):
+                fifo = Fifo(channel_xml)
+                self._fifos[fifo.name] = fifo
 
     @property
     def filepath(self):
@@ -79,9 +83,17 @@ class Bitfile(object):
 
     def _is_register_fxp(self, reg_xml):
         datatype = reg_xml.find("Datatype")
+        if datatype.find("Array") is not None:
+            datatype = datatype.find("Array").find("Type")
         for child in datatype.getchildren():
             if str(DataType.Fxp).lower() not in child.tag.lower():
                 return False
+        return True
+
+    def _is_fifo_fxp(self, channel_xml):
+        datatype = channel_xml.find("DataType").find("SubType").text.title()
+        if str(DataType.Fxp).lower() not in datatype.lower():
+            return False
         return True
 
 
@@ -192,7 +204,10 @@ class FxpRegister(Register):
     def __init__(self, reg_xml):
         super(FxpRegister, self).__init__(reg_xml)
         datatype = reg_xml.find("Datatype")
-        fxp_xml = datatype.find("FXP")
+        if self.is_array():
+            fxp_xml = datatype.find("Array").find("Type").find("FXP")
+        else:
+            fxp_xml = datatype.find("FXP")
         self._signed = True if fxp_xml.find("Signed").text.lower() == 'true' else False
         self._overflow = True if fxp_xml.find("IncludeOverflowStatus").text.lower() == 'true' else False
         self._word_length = int(fxp_xml.find("WordLength").text)
