@@ -32,7 +32,7 @@ class Bitfile(object):
             if reg.datatype is not None:
                 assert reg.name not in self._registers, \
                     "One or more registers have the same name '%s', this is not supported" % reg.name
-                if not reg.is_array():
+                if not reg.is_array() and reg.datatype is not DataType.Fxp:
                     self._registers[reg.name] = reg
 
         self._fifos = {}
@@ -76,8 +76,7 @@ class Bitfile(object):
 
     def create_register(self, xml):
         if self._is_register_fxp(xml):
-            fxp_register = FxpRegister(xml)
-            return fxp_register
+            return FxpRegister(xml)
         else:
             return Register(xml)
 
