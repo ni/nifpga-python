@@ -1,13 +1,13 @@
 from decimal import Decimal, getcontext
 from nifpga import DataType
-from nifpga.session import _FxpRegister
+from nifpga.bitfile import _FXP
 from nifpga.tests.test_nifpga import assert_warns
 import unittest
 
 getcontext().prec = 100
 
 
-class MockFxpRegister(_FxpRegister):
+class MockFxp(_FXP):
     def __init__(self,
                  signed,
                  enableOverflowStatus,
@@ -20,10 +20,12 @@ class MockFxpRegister(_FxpRegister):
         self._minimum = self._calculate_minimum()
         self._maximum = self._calculate_maximum()
         self._overflow_enabled = enableOverflowStatus
+        self._size_in_bits = self._calculate_size_in_bits()
+        self._data_mask = (1 << self._size_in_bits) - 1
         self.set_register_attributes()
 
     def set_register_attributes(self):
-        self._name = "MockFxpRegister"
+        self._name = "MockFxp"
         self._offset = 0  # Not needed for mock
         self._datatype = DataType.Fxp  # FXP is always DataType.Fxp
         self._ctype_type = self._datatype._return_ctype()
@@ -40,14 +42,14 @@ class FXPRegisterAsserts(object):
                                               register,
                                               read_value,
                                               expected_value):
-        actual = register._convert_from_read_value_to_decimal(read_value)
+        actual = register.unpack_data(read_value)
         self._test.assertEqual(actual, expected_value)
 
     def assert_user_input_converted_to_fxp(self,
                                            register,
                                            user_input,
                                            expected_value):
-        actual = register._convert_user_input_to_fxp_representation(user_input)
+        actual = register.pack_data(user_input, 0)
         self._test.assertEqual(actual, expected_value)
 
 
@@ -77,7 +79,7 @@ positive_integer = 42  # Arbitrary constant used in some tests
 
 class FXPRegisterSharedTests(unittest.TestCase):
     def setUp(self):
-        self.testRegister = MockFxpRegister(signed=False,
+        self.testRegister = MockFxp(signed=False,
                                             enableOverflowStatus=False,
                                             word_length=1,
                                             integer_word_length=1)
@@ -126,7 +128,7 @@ class FXPRegisterSharedTests(unittest.TestCase):
 
 class FXPRegister16bitWord16bitInteger(FXPRegisterSharedTests):
     def setUp(self):
-        self.testRegister = MockFxpRegister(signed=False,
+        self.testRegister = MockFxp(signed=False,
                                             enableOverflowStatus=False,
                                             word_length=16,
                                             integer_word_length=16)
@@ -138,7 +140,7 @@ class FXPRegister16bitWord16bitInteger(FXPRegisterSharedTests):
 
 class FXPRegister16bitWord16bitIntegerSigned(FXPRegisterSharedTests):
     def setUp(self):
-        self.testRegister = MockFxpRegister(signed=True,
+        self.testRegister = MockFxp(signed=True,
                                             enableOverflowStatus=False,
                                             word_length=16,
                                             integer_word_length=16)
@@ -151,7 +153,7 @@ class FXPRegister16bitWord16bitIntegerSigned(FXPRegisterSharedTests):
 class FXPRegister15bitWord15bitIntegerOverflow(FXPRegisterSharedTests):
 
     def setUp(self):
-        self.testRegister = MockFxpRegister(signed=False,
+        self.testRegister = MockFxp(signed=False,
                                             enableOverflowStatus=True,
                                             word_length=15,
                                             integer_word_length=15)
@@ -169,7 +171,7 @@ class FXPRegister15bitWord15bitIntegerOverflow(FXPRegisterSharedTests):
 
 class FXPRegister15bitWord15bitIntegerSignedOverflow(FXPRegisterSharedTests):
     def setUp(self):
-        self.testRegister = MockFxpRegister(signed=True,
+        self.testRegister = MockFxp(signed=True,
                                             enableOverflowStatus=True,
                                             word_length=15,
                                             integer_word_length=15)
@@ -182,7 +184,7 @@ class FXPRegister15bitWord15bitIntegerSignedOverflow(FXPRegisterSharedTests):
     def test_overflow_bit_is_not_calculated_in_twos_compliment(self):
         # Create a 15 bit word that is all 1's
         value = int('1' * (self.testRegister._word_length + 1), 2)
-        result = self.testRegister._convert_from_read_value_to_decimal(value)
+        result = self.testRegister.unpack_data(value)
         """ The expected value of overflow(1) 111 1111 1111 1111, would
         expect -1 and an overflow. as the twos complement of the non-overflow
         bits would be 000 0000 0000 0001"""
@@ -192,7 +194,7 @@ class FXPRegister15bitWord15bitIntegerSignedOverflow(FXPRegisterSharedTests):
 
 class FXPRegister16bitWord0bitInteger(FXPRegisterSharedTests):
     def setUp(self):
-        self.testRegister = MockFxpRegister(signed=False,
+        self.testRegister = MockFxp(signed=False,
                                             enableOverflowStatus=False,
                                             word_length=16,
                                             integer_word_length=0)
@@ -204,7 +206,7 @@ class FXPRegister16bitWord0bitInteger(FXPRegisterSharedTests):
 
 class FXPRegister15bitWord0bitIntegerOverflow(FXPRegisterSharedTests):
     def setUp(self):
-        self.testRegister = MockFxpRegister(signed=False,
+        self.testRegister = MockFxp(signed=False,
                                             enableOverflowStatus=True,
                                             word_length=15,
                                             integer_word_length=0)
@@ -216,7 +218,7 @@ class FXPRegister15bitWord0bitIntegerOverflow(FXPRegisterSharedTests):
 
 class FXPRegister15bitWord0bitIntegerSignedOverflow(FXPRegisterSharedTests):
     def setUp(self):
-        self.testRegister = MockFxpRegister(signed=True,
+        self.testRegister = MockFxp(signed=True,
                                             enableOverflowStatus=True,
                                             word_length=15,
                                             integer_word_length=0)
@@ -229,7 +231,7 @@ class FXPRegister15bitWord0bitIntegerSignedOverflow(FXPRegisterSharedTests):
 
 class FXPRegister32bitWord16bitIntegerOverflow(FXPRegisterSharedTests):
     def setUp(self):
-        self.testRegister = MockFxpRegister(signed=False,
+        self.testRegister = MockFxp(signed=False,
                                             enableOverflowStatus=True,
                                             word_length=32,
                                             integer_word_length=16)
@@ -244,7 +246,7 @@ class FXPRegister32bitWord16bitIntegerOverflow(FXPRegisterSharedTests):
 
 class FXPRegister16bitWord100bitInteger(FXPRegisterSharedTests):
     def setUp(self):
-        self.testRegister = MockFxpRegister(signed=False,
+        self.testRegister = MockFxp(signed=False,
                                             enableOverflowStatus=False,
                                             word_length=16,
                                             integer_word_length=100)
@@ -256,7 +258,7 @@ class FXPRegister16bitWord100bitInteger(FXPRegisterSharedTests):
 
 class FXPRegister16bitWordNegative100bitInteger(FXPRegisterSharedTests):
     def setUp(self):
-        self.testRegister = MockFxpRegister(signed=False,
+        self.testRegister = MockFxp(signed=False,
                                             enableOverflowStatus=False,
                                             word_length=16,
                                             integer_word_length=-100)
@@ -269,7 +271,7 @@ class FXPRegister16bitWordNegative100bitInteger(FXPRegisterSharedTests):
 
 class FXPRegister64bitWord64bitIntegerOverflow(FXPRegisterSharedTests):
     def setUp(self):
-        self.testRegister = MockFxpRegister(signed=False,
+        self.testRegister = MockFxp(signed=False,
                                             enableOverflowStatus=True,
                                             word_length=64,
                                             integer_word_length=64)
