@@ -166,6 +166,7 @@ class _Numeric(object):
             return data
 
         signed_bit_mask = 1 << (self._size_in_bits - 1)
+
         def unpack_numeric_signed(bits_from_fpga):
             data = bits_from_fpga & self._data_mask
             if data & signed_bit_mask:
