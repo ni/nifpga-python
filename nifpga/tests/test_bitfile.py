@@ -25,4 +25,3 @@ class BitfileTest(unittest.TestCase):
             bitfile = nifpga.Bitfile(f.read(), parse_contents=True)
             print(bitfile.registers)
             bitfile.registers["output fxp array"]
-

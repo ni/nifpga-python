@@ -85,7 +85,9 @@ class Bitfile(object):
         return self._base_address_on_device
 
 
-class UnsupportedTypeError(RuntimeError): pass
+class UnsupportedTypeError(RuntimeError):
+    pass
+
 
 def _parse_type(type_xml):
     """ Parses the XML given and creates the appropriate type class for it """
@@ -99,7 +101,7 @@ def _parse_type(type_xml):
     else:
         type_name = type_xml.tag
         name = type_xml.find("Name").text
-        if name == None:
+        if name is None:
             name = ""
 
     if type_name == "Boolean":
@@ -116,31 +118,6 @@ def _parse_type(type_xml):
         raise UnsupportedTypeError("The FPGA Interface Python API does not yet support Complex Fixed Point")
     else:
         return _Numeric(name, type_name)
-
-
-def _get_unpack_numeric(bits_of_data, signed):
-    mask = (1 << bits_of_data) - 1
-    def unpack_numeric(bits_from_fpga):
-        data = bits_from_fpga & mask
-        return data
-
-    if signed:
-        signed_bit_mask = 1 << (bits_of_data - 1)
-        def unpack_numeric(bits_from_fpga):
-            data = bits_from_fpga & mask
-            if data & signed_bit_mask:
-                data = data ^ mask
-                data += 1
-                data *= -1
-            return data
-    return unpack_numeric
-
-def _get_pack_numeric(bits_of_data):
-    mask = (1 << bits_of_data) - 1
-    def pack_numeric(data_to_pack, packed_data):
-        packed_data = packed_data << bits_of_data
-        return packed_data | (data_to_pack & mask)
-    return pack_numeric
 
 
 class _Numeric(object):
@@ -182,8 +159,21 @@ class _Numeric(object):
         else:
             raise UnsupportedTypeError("Unrecognized type encountered: %s.  Consider opening an issue on github.com/ni/nifpga" % type_name)
 
-        self._pack = _get_pack_numeric(self._size_in_bits)
-        self._unpack = _get_unpack_numeric(self._size_in_bits, self._signed)
+        self._data_mask = (1 << self._size_in_bits) - 1
+
+        def unpack_numeric_unsigned(bits_from_fpga):
+            data = bits_from_fpga & self._data_mask
+            return data
+
+        signed_bit_mask = 1 << (self._size_in_bits - 1)
+        def unpack_numeric_signed(bits_from_fpga):
+            data = bits_from_fpga & self._data_mask
+            if data & signed_bit_mask:
+                data = data ^ self._data_mask
+                data += 1
+                data *= -1
+            return data
+        self._unpack = unpack_numeric_signed if self._signed else unpack_numeric_unsigned
 
     @property
     def name(self):
@@ -205,7 +195,8 @@ class _Numeric(object):
         return self._unpack(data)
 
     def pack_data(self, data_to_pack, packed_data):
-        return self._pack(data_to_pack, packed_data)
+        packed_data = packed_data << self._size_in_bits
+        return packed_data | (data_to_pack & self._data_mask)
 
 
 class _Float(object):
@@ -286,6 +277,7 @@ class ClusterMustContainUniqueNames(RuntimeError):
     requires that all members of the cluster have a unique label."""
     pass
 
+
 class _Cluster(object):
     """ Handles packing and unpacking clusters. """
     def __init__(self, name, type_xml):
@@ -325,7 +317,7 @@ class _Cluster(object):
         add it to the dict going back up the stack. This way we insert into the
         OrderedDict in the correct order"""
         child = next(child_iter, None)
-        if child == None:
+        if child is None:
             return
         current_result = child.unpack_data(data)
         data >>= child.size_in_bits
@@ -348,7 +340,6 @@ class _Cluster(object):
 class _Array(object):
     """ Handles packing and unpacking arrays. """
     def __init__(self, name, type_xml):
-        type = next(type_xml.iter())
         self._name = name
         self._subtype = _parse_type(list(type_xml.find("Type"))[0])
         self._size = int(type_xml.find("Size").text)
@@ -667,7 +658,7 @@ class Fifo(object):
         if datatype_xml.find("SubType") is not None:
             self._type = _parse_type(datatype_xml)
         else:
-            self._type = _parse_type(list(datatype)[0])
+            self._type = _parse_type(list(datatype_xml)[0])
 
     @property
     def datatype(self):

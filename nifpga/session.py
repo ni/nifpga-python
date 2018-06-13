@@ -279,9 +279,9 @@ class Session(object):
                                       base_address_on_device)
             else:
                 return _Register(self._session,
-                             self._nifpga,
-                             bitfile_register,
-                             base_address_on_device)
+                                 self._nifpga,
+                                 bitfile_register,
+                                 base_address_on_device)
         else:  # register that handles conversion for more complex types
             return _DataConvertingRegister(self._session,
                                            self._nifpga,
@@ -445,12 +445,12 @@ class _DataConvertingRegister(_Register):
                  bitfile_register,
                  base_address_on_device):
         super(_DataConvertingRegister, self).__init__(
-                                           session,
-                                           nifpga,
-                                           bitfile_register,
-                                           base_address_on_device,
-                                           read_func=nifpga["ReadArray%s" % DataType.U32],
-                                           write_func=nifpga["WriteArray%s" % DataType.U32])
+            session,
+            nifpga,
+            bitfile_register,
+            base_address_on_device,
+            read_func=nifpga["ReadArray%s" % DataType.U32],
+            write_func=nifpga["WriteArray%s" % DataType.U32])
         self._type = bitfile_register.type
         self._transfer_len = int(ceil(self._type.size_in_bits / 32.0))
         self._ctype_type = self._ctype_type * self._transfer_len
@@ -529,7 +529,7 @@ class _FIFO(object):
                  bitfile_fifo,
                  datatype=None):
         self._datatype = datatype
-        if self._datatype == None:
+        if self._datatype is None:
             self._datatype = bitfile_fifo.datatype
         self._number = bitfile_fifo.number
         self._session = session
@@ -829,6 +829,7 @@ class _FIFO(object):
             raise TypeError("flow_control must be set to an nifpga.FlowControl")
         self._set_fifo_property(FifoProperty.FlowControl, value.value)
 
+
 class _FxpFIFO(_FIFO):
     """
     FXP FIFOs are packed up to 64bits
@@ -877,7 +878,6 @@ class _FxpFIFO(_FIFO):
                          empty_elements_remaining)
         return empty_elements_remaining.value
 
-
     def read(self, number_of_elements, timeout_ms=0):
         """ Read the specified number of elements from the FIFO.
 
@@ -911,4 +911,3 @@ class _FxpFIFO(_FIFO):
         data = [self._fxp.unpack_data(elem) for elem in buf]
         return self.ReadValues(data=data,
                                elements_remaining=elements_remaining.value)
-

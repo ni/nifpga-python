@@ -1,11 +1,8 @@
-from nifpga.bitfile import _Cluster, \
-                           _parse_type, \
-                           UnsupportedTypeError, \
-                           ClusterMustContainUniqueNames
+from nifpga.bitfile import (_parse_type,
+                            UnsupportedTypeError,
+                            ClusterMustContainUniqueNames)
 import unittest
 import xml.etree.ElementTree as ElementTree
-from contextlib import contextmanager
-import warnings
 
 cluster_xml = """
 <Cluster>
@@ -171,6 +168,7 @@ def printit(object, **kwrds):
         print(textwrap.fill(' '.join(words), width=width), file=stream)
 """
 
+
 class ClusterTests(unittest.TestCase):
     def setUp(self):
         tree = ElementTree.fromstring(cluster_xml)
@@ -225,7 +223,6 @@ class ClusterTests(unittest.TestCase):
         packed_data = self.testRegister.pack_data(expected_data, 0)
         assert packed_data == actual_data
 
-
     def test_cluster_real_data_2(self):
         actual_data = 650140623102406731927256098101662313669128987008919352549838047850309849438881231947219947572849073945363668902620592607917571840
         data = self.testRegister.unpack_data(actual_data)
@@ -260,4 +257,3 @@ class ClusterTests(unittest.TestCase):
         tree = ElementTree.fromstring(cluster_with_multiple_members_with_the_same_name)
         with self.assertRaises(ClusterMustContainUniqueNames):
             self.testRegister = _parse_type(tree)
-
