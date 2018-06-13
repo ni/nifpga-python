@@ -139,36 +139,6 @@ cluster_with_multiple_members_with_the_same_name = """
 """
 
 
-"""
-def printit(object, **kwrds):
-    from collections import OrderedDict
-    try:
-        from cStringIO import StringIO
-    except ImportError:  # Python 3
-        from io import StringIO
-    from pprint import pprint as pp_pprint
-    import sys
-    import textwrap
-
-    try:
-        width = kwrds['width']
-    except KeyError: # unlimited, use stock function
-        pp_pprint(object, **kwrds)
-        return
-    buffer = StringIO()
-    stream = kwrds.get('stream', sys.stdout)
-    kwrds.update({'stream': buffer})
-    pp_pprint(object, **kwrds)
-    words = buffer.getvalue().split()
-    buffer.close()
-    # word wrap output onto multiple lines <= width characters
-    try:
-        print >> stream, textwrap.fill(' '.join(words), width=width)
-    except TypeError:  # Python 3
-        print(textwrap.fill(' '.join(words), width=width), file=stream)
-"""
-
-
 class ClusterTests(unittest.TestCase):
     def setUp(self):
         tree = ElementTree.fromstring(cluster_xml)
