@@ -1,10 +1,8 @@
 import unittest
 import os
-
 import nifpga
 
-BITFILE_ALL_REGISTERS = 'nifpga/tests/allregisters.lvbitx'
-BITFILE_FXP_TYPES = 'nifpga/tests/FXPTypes.lvbitx'
+BITFILE_ALL_REGISTERS = 'nifpga/tests/allregistertypes.lvbitx'
 
 
 class BitfileTest(unittest.TestCase):
@@ -18,13 +16,12 @@ class BitfileTest(unittest.TestCase):
             self.assertTrue(bitfile.filepath is None)
 
     def test_parse_bitfile_with_fxp_fifo(self):
-        with open(BITFILE_FXP_TYPES, 'r') as f:
+        with open(BITFILE_ALL_REGISTERS, 'r') as f:
             bitfile = nifpga.Bitfile(f.read(), parse_contents=True)
-            with self.assertRaises(KeyError):
-                bitfile.fifos["FXP FIFO"]
+            bitfile.fifos["FXP FIFO"]
 
     def test_parse_bitfile_with_fxp_register_array(self):
-        with open(BITFILE_FXP_TYPES, 'r') as f:
+        with open(BITFILE_ALL_REGISTERS, 'r') as f:
             bitfile = nifpga.Bitfile(f.read(), parse_contents=True)
-            with self.assertRaises(KeyError):
-                bitfile.registers["FXP Array"]
+            print(bitfile.registers)
+            bitfile.registers["output fxp array"]
