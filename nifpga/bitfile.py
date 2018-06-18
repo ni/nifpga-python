@@ -127,9 +127,10 @@ class _BaseType(object):
             self._name = ""
         else:
             self._name = name
+
     @property
     def name(self):
-         return self._name
+        return self._name
 
 
 class _Numeric(_BaseType):

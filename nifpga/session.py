@@ -126,7 +126,7 @@ class Session(object):
         for name, bitfile_fifo in iteritems(bitfile.fifos):
             assert name not in self._fifos, \
                 "One or more FIFOs have the same name '%s', this is not supported" % name
-            self._fifos[name] = _create_fifo(bitfile_fifo)
+            self._fifos[name] = self._create_fifo(bitfile_fifo)
 
     def __enter__(self):
         return self
@@ -290,7 +290,6 @@ class Session(object):
             return _FxpFIFO(self._session, self._nifpga, bitfile_fifo)
         else:
             return _FIFO(self._session, self._nifpga, bitfile_fifo)
-
 
 
 class _Register(object):
