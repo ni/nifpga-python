@@ -126,10 +126,7 @@ class Session(object):
         for name, bitfile_fifo in iteritems(bitfile.fifos):
             assert name not in self._fifos, \
                 "One or more FIFOs have the same name '%s', this is not supported" % name
-            if bitfile_fifo.is_fxp():
-                self._fifos[name] = _FxpFIFO(self._session, self._nifpga, bitfile_fifo)
-            else:
-                self._fifos[name] = _FIFO(self._session, self._nifpga, bitfile_fifo)
+            self._fifos[name] = _create_fifo(bitfile_fifo)
 
     def __enter__(self):
         return self
@@ -287,6 +284,13 @@ class Session(object):
                                            self._nifpga,
                                            bitfile_register,
                                            base_address_on_device)
+
+    def _create_fifo(self, bitfile_fifo):
+        if bitfile_fifo.is_fxp():
+            return _FxpFIFO(self._session, self._nifpga, bitfile_fifo)
+        else:
+            return _FIFO(self._session, self._nifpga, bitfile_fifo)
+
 
 
 class _Register(object):

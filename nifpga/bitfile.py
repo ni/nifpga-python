@@ -90,10 +90,15 @@ class UnsupportedTypeError(RuntimeError):
 
 
 def _parse_type(type_xml):
-    """ Parses the XML given and creates the appropriate type class for it """
-    # Type XML comes in 2 flavors and we need to handle both
-    # We will sometimes (for FIFOs) get a non-recursive "SubType" that just provides the type and no does not name it.
-    # For registers and sometimes FIFOs, we will always get a recursive type containing names for all members
+    """ Parses the XML given and creates the appropriate type class for it.
+
+    Type XML comes in 2 flavors and we need to handle both.
+    We will sometimes (for FIFOs) get a non-recursive "SubType" that just
+    provides the type and does not name it.  We will never see Clusters or
+    Arrays as the "SubType".
+    For registers and sometimes FIFOs, we will always get a recursive type
+    containing names for all members.
+    """
     type = type_xml.find("SubType")
     if type is not None:
         type_name = type.text
@@ -101,9 +106,6 @@ def _parse_type(type_xml):
     else:
         type_name = type_xml.tag
         name = type_xml.find("Name").text
-        if name is None:
-            name = ""
-
     if type_name == "Boolean":
         return _Bool(name)
     if type_name == "Cluster":
@@ -116,50 +118,34 @@ def _parse_type(type_xml):
         return _Float(name, type_name)
     if type_name == "CFXP":
         raise UnsupportedTypeError("The FPGA Interface Python API does not yet support Complex Fixed Point")
-    else:
-        return _Numeric(name, type_name)
+    return _Numeric(name, type_name)
 
 
-class _Numeric(object):
+class _BaseType(object):
+    def __init__(self, name):
+        if name is None:
+            self._name = ""
+        else:
+            self._name = name
+    @property
+    def name(self):
+         return self._name
+
+
+class _Numeric(_BaseType):
     """ Handles packing and unpacking Numerics such as U8, I8, EnumU8, etc"""
     def __init__(self, name, type_name):
-        self._name = name
-        if "U8" in type_name:
-            self._size_in_bits = 8
-            self._signed = False
-            self._datatype = DataType.U8
-        elif "I8" in type_name:
-            self._size_in_bits = 8
-            self._signed = True
-            self._datatype = DataType.I8
-        elif "U16" in type_name:
-            self._size_in_bits = 16
-            self._signed = False
-            self._datatype = DataType.U16
-        elif "I16" in type_name:
-            self._size_in_bits = 16
-            self._signed = True
-            self._datatype = DataType.I16
-        elif "U32" in type_name:
-            self._size_in_bits = 32
-            self._signed = False
-            self._datatype = DataType.U32
-        elif "I32" in type_name:
-            self._size_in_bits = 32
-            self._signed = True
-            self._datatype = DataType.I32
-        elif "U64" in type_name:
-            self._size_in_bits = 64
-            self._signed = False
-            self._datatype = DataType.U64
-        elif "I64" in type_name:
-            self._size_in_bits = 64
-            self._signed = True
-            self._datatype = DataType.I64
+        super(_Numeric, self).__init__(name)
+        type_name = type_name.replace("Enum", "")
+        self._signed = type_name[0].lower() == 'i'
+        self._size_in_bits = int(type_name[1:])
+        self._data_mask = (1 << self._size_in_bits) - 1
+        for datatype in DataType:
+            if str(datatype).lower() in type_name.lower():
+                self._datatype = datatype
+                break
         else:
             raise UnsupportedTypeError("Unrecognized type encountered: %s.  Consider opening an issue on github.com/ni/nifpga" % type_name)
-
-        self._data_mask = (1 << self._size_in_bits) - 1
 
         def unpack_numeric_unsigned(bits_from_fpga):
             data = bits_from_fpga & self._data_mask
@@ -175,10 +161,6 @@ class _Numeric(object):
                 data *= -1
             return data
         self._unpack = unpack_numeric_signed if self._signed else unpack_numeric_unsigned
-
-    @property
-    def name(self):
-        return self._name
 
     @property
     def datatype(self):
@@ -200,10 +182,10 @@ class _Numeric(object):
         return packed_data | (data_to_pack & self._data_mask)
 
 
-class _Float(object):
+class _Float(_BaseType):
     """ Handles packing and unpacking floating point values from the FPGA. """
     def __init__(self, name, type_name):
-        self._name = name
+        super(_Float, self).__init__(name)
         if "SGL" == type_name:
             self._size_in_bits = 32
             self._datatype = DataType.Sgl
@@ -211,10 +193,6 @@ class _Float(object):
             self._size_in_bits = 64
             self._datatype = DataType.Dbl
         self._data_mask = (1 << self._size_in_bits) - 1
-
-    @property
-    def name(self):
-        return self._name
 
     @property
     def datatype(self):
@@ -243,14 +221,10 @@ class _Float(object):
         return (packed_data << self._size_in_bits) | bits_to_pack
 
 
-class _Bool(object):
+class _Bool(_BaseType):
     """ Handles packing and unpacking bools. """
     def __init__(self, name):
-        self._name = name
-
-    @property
-    def name(self):
-        return self._name
+        super(_Bool, self).__init__(name)
 
     @property
     def datatype(self):
@@ -279,10 +253,10 @@ class ClusterMustContainUniqueNames(RuntimeError):
     pass
 
 
-class _Cluster(object):
+class _Cluster(_BaseType):
     """ Handles packing and unpacking clusters. """
     def __init__(self, name, type_xml):
-        self._name = name
+        super(_Cluster, self).__init__(name)
         self._datatype = DataType.Cluster
         member_types = type_xml.find("TypeList")
         self._children = []
@@ -294,10 +268,6 @@ class _Cluster(object):
             names.add(child_type.name)
             self._children.append(_parse_type(child))
         self._size_in_bits = sum(child.size_in_bits for child in self._children)
-
-    @property
-    def name(self):
-        return self._name
 
     @property
     def datatype(self):
@@ -338,17 +308,13 @@ class _Cluster(object):
         return packed_data
 
 
-class _Array(object):
+class _Array(_BaseType):
     """ Handles packing and unpacking arrays. """
     def __init__(self, name, type_xml):
-        self._name = name
+        super(_Array, self).__init__(name)
         self._subtype = _parse_type(list(type_xml.find("Type"))[0])
         self._size = int(type_xml.find("Size").text)
         self._size_in_bits = self._subtype.size_in_bits * self._size
-
-    @property
-    def name(self):
-        return self._name
 
     @property
     def datatype(self):
@@ -382,10 +348,10 @@ class _Array(object):
         return packed_data
 
 
-class _FXP(object):
+class _FXP(_BaseType):
     """ Handles packing and unpacking FXP values from the FPGA. """
     def __init__(self, name, type_xml):
-        self._name = name
+        super(_FXP, self).__init__(name)
         self._datatype = DataType.Fxp
         self._signed = True if type_xml.find("Signed").text.lower() == 'true' else False
         overflow_enabled_xml = type_xml.find("IncludeOverflowStatus")
@@ -395,15 +361,13 @@ class _FXP(object):
             self._overflow_enabled = False
         self._word_length = int(type_xml.find("WordLength").text)
         self._integer_word_length = int(type_xml.find("IntegerWordLength").text)
+        # Delta, min, and max exist in the XML, but are incorrect...
+        # So we calculate them here instead.
         self._delta = self._calculate_delta()
         self._minimum = self._calculate_minimum()
         self._maximum = self._calculate_maximum()
         self._size_in_bits = self._calculate_size_in_bits()
         self._data_mask = (1 << self._size_in_bits) - 1
-
-    @property
-    def name(self):
-        return self._name
 
     @property
     def datatype(self):
@@ -603,9 +567,10 @@ class Register(object):
         self._internal = True if reg_xml.find("Internal").text.lower() == 'true' else False
         datatype = reg_xml.find("Datatype")
         self._type = _parse_type(list(datatype)[0])
-        self._num_elements = 1
         if self.is_array():
             self._num_elements = self._type.size
+        else:
+            self._num_elements = 1
 
     def __len__(self):
         """ Returns the number of elements in this register. """

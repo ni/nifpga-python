@@ -168,7 +168,7 @@ class ClusterTests(unittest.TestCase):
         packed_data = self.testRegister.pack_data(expected_data, 0)
         assert packed_data == 0
 
-    def test_cluster_real_data_1(self):
+    def test_cluster_values_set_to_1(self):
         actual_data = 389948983317742165538549719682430202967988854558358925786670372898282524917257258819755320125926426630253986178278732200331444480
         data = self.testRegister.unpack_data(actual_data)
         expected_data = \
@@ -193,7 +193,7 @@ class ClusterTests(unittest.TestCase):
         packed_data = self.testRegister.pack_data(expected_data, 0)
         assert packed_data == actual_data
 
-    def test_cluster_real_data_2(self):
+    def test_cluster_random_data(self):
         actual_data = 650140623102406731927256098101662313669128987008919352549838047850309849438881231947219947572849073945363668902620592607917571840
         data = self.testRegister.unpack_data(actual_data)
         expected_cluster = \
