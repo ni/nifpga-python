@@ -321,6 +321,7 @@ class _Register(object):
         else:
             self._write_func = write_func
         self._ctype_type = self._datatype._return_ctype()
+        self._type = bitfile_register.type
         self._resource = bitfile_register.offset + base_address_on_device
         if bitfile_register.access_may_timeout():
             self._resource = self._resource | 0x80000000
@@ -454,7 +455,6 @@ class _DataConvertingRegister(_Register):
             base_address_on_device,
             read_func=nifpga["ReadArray%s" % DataType.U32],
             write_func=nifpga["WriteArray%s" % DataType.U32])
-        self._type = bitfile_register.type
         self._transfer_len = int(ceil(self._type.size_in_bits / 32.0))
         self._ctype_type = self._ctype_type * self._transfer_len
 
