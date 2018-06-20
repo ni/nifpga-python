@@ -8,7 +8,7 @@ from .statuscheckedlibrary import (NamedArgtype,
                                    StatusCheckedLibrary,
                                    LibraryNotFoundError)
 import ctypes
-from enum import Enum  # Third-party enum34
+from enum import Enum
 
 
 class DataType(Enum):
