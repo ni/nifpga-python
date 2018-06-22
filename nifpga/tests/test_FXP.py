@@ -22,6 +22,8 @@ class MockFxp(_FXP):
         self._overflow_enabled = enableOverflowStatus
         self._size_in_bits = self._calculate_size_in_bits()
         self._data_mask = (1 << self._size_in_bits) - 1
+        self._word_length_mask = (1 << self._word_length) - 1
+        self._signed_bit_mask = 1 << (self._word_length - 1)
         self.set_register_attributes()
 
     def set_register_attributes(self):

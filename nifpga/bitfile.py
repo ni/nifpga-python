@@ -369,6 +369,9 @@ class _FXP(_BaseType):
         self._maximum = self._calculate_maximum()
         self._size_in_bits = self._calculate_size_in_bits()
         self._data_mask = (1 << self._size_in_bits) - 1
+        self._word_length_mask = (1 << self._word_length) - 1
+        if self._signed:
+            self._signed_bit_mask = 1 << (self._word_length - 1)
 
     @property
     def datatype(self):
@@ -439,7 +442,7 @@ class _FXP(_BaseType):
 
         if self._signed:
             data = self._integer_twos_comp(data)
-        decimal_value = Decimal(data * self._delta)
+        decimal_value = data * self._delta
         if self._overflow_enabled:
             return (overflow, decimal_value)
         else:
@@ -457,14 +460,13 @@ class _FXP(_BaseType):
     def _remove_overflow_bit(self, data):
         """ This helper method masks out all bits not inside the word length,
         ultimately returning a value of data without the overflow bit. """
-        return data & (2**(self._word_length) - 1)
+        return data & self._word_length_mask
 
     def _integer_twos_comp(self, data):
         """ Checks the signed bit and determines if the value is negative, If
         so take the twos complement of the input."""
-        signed_bit_mask = 2**(self._word_length - 1)
-        if data & signed_bit_mask > 0:
-            data = data ^ (2 ** (self._word_length) - 1)
+        if data & self._signed_bit_mask > 0:
+            data = data ^ self._word_length_mask
             data += 1
             data *= -1
         return data
@@ -485,9 +487,8 @@ class _FXP(_BaseType):
         if self._signed and data < 0:
             fxp_representation = self._integer_twos_comp(fxp_representation)
 
-        if self._overflow_enabled:
-            if overflow:
-                fxp_representation += 2**(self._word_length)
+        if overflow:
+            fxp_representation += 2**(self._word_length)
 
         packed_data <<= self._size_in_bits
         packed_data |= fxp_representation
