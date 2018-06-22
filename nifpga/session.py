@@ -847,6 +847,10 @@ class _FxpFIFO(_FIFO):
                                        datatype=DataType.U64)
         self._fxp = bitfile_fifo.type
 
+    @property
+    def datatype(self):
+        return DataType.Fxp
+
     def write(self, data, timeout_ms=0):
         """ Writes the specified data to the FIFO.
 
