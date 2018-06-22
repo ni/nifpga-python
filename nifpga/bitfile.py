@@ -141,27 +141,26 @@ class _Numeric(_BaseType):
         self._signed = type_name[0].lower() == 'i'
         self._size_in_bits = int(type_name[1:])
         self._data_mask = (1 << self._size_in_bits) - 1
+        self._signed_bit_mask = 1 << (self._size_in_bits - 1)
         for datatype in DataType:
             if str(datatype).lower() in type_name.lower():
                 self._datatype = datatype
                 break
         else:
             raise UnsupportedTypeError("Unrecognized type encountered: %s.  Consider opening an issue on github.com/ni/nifpga" % type_name)
+        self._unpack = self._unpack_numeric_signed if self._signed else self._unpack_numeric_unsigned
 
-        def unpack_numeric_unsigned(bits_from_fpga):
-            data = bits_from_fpga & self._data_mask
-            return data
+    def _unpack_numeric_unsigned(self, bits_from_fpga):
+        data = bits_from_fpga & self._data_mask
+        return data
 
-        signed_bit_mask = 1 << (self._size_in_bits - 1)
-
-        def unpack_numeric_signed(bits_from_fpga):
-            data = bits_from_fpga & self._data_mask
-            if data & signed_bit_mask:
-                data = data ^ self._data_mask
-                data += 1
-                data *= -1
-            return data
-        self._unpack = unpack_numeric_signed if self._signed else unpack_numeric_unsigned
+    def _unpack_numeric_signed(self, bits_from_fpga):
+        data = bits_from_fpga & self._data_mask
+        if data & self._signed_bit_mask:
+            data = data ^ self._data_mask
+            data += 1
+            data *= -1
+        return data
 
     @property
     def datatype(self):
