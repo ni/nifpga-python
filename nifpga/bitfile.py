@@ -157,7 +157,7 @@ class _String(_BaseType):
         return ""
 
     def pack_data(self, data_to_pack, packed_data):
-        pass  # strings won't actually be included in error clusters
+        return packed_data  # don't pack anything for a string
 
 
 class _Numeric(_BaseType):
