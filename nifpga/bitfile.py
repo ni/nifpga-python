@@ -159,6 +159,7 @@ class _String(_BaseType):
     def pack_data(self, data_to_pack, packed_data):
         pass  # strings won't actually be included in error clusters
 
+
 class _Numeric(_BaseType):
     """ Handles packing and unpacking Numerics such as U8, I8, EnumU8, etc"""
     def __init__(self, name, type_name):
