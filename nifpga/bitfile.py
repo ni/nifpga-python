@@ -38,9 +38,9 @@ class Bitfile(object):
                     "One or more registers have the same name '%s', this is not supported" % reg.name
                 self._registers[reg.name] = reg
             except UnsupportedTypeError as e:
-                warn("Skipping Register: %s, %s" % (reg.name, str(e)))
+                warn("Skipping Register: %s, %s" % (reg_xml.find("Name").text, str(e)))
             except ClusterMustContainUniqueNames as e:
-                warn("Skipping Register: %s, %s" % (reg.name, str(e)))
+                warn("Skipping Register: %s, %s" % (reg_xml.find("Name").text, str(e)))
 
         self._fifos = {}
         for channel_xml in nifpga.find("DmaChannelAllocationList"):
@@ -116,6 +116,8 @@ def _parse_type(type_xml):
         return _Array(name, type_xml)
     if type_name == "SGL" or type_name == "DBL":
         return _Float(name, type_name)
+    if type_name == "String":
+        return _String(name)
     if type_name == "CFXP":
         raise UnsupportedTypeError("The FPGA Interface Python API does not yet support Complex Fixed Point")
     return _Numeric(name, type_name)
@@ -133,21 +135,45 @@ class _BaseType(object):
         return self._name
 
 
+class _String(_BaseType):
+    """ Handles ignoring string types on the FPGA.  Strings are not supported
+    on the FPGA, but sometimes show up in error clusters. """
+    def __init__(self, name):
+        super(_String, self).__init__(name)
+
+    @property
+    def datatype(self):
+        return DataType.Cluster  # lie and claim we are a cluster so callers don't make assumptions about our contents
+
+    @property
+    def size_in_bits(self):
+        return 0
+
+    @property
+    def is_c_api_type(self):
+        return False
+
+    def unpack_data(self, data):
+        return ""
+
+    def pack_data(self, data_to_pack, packed_data):
+        pass  # strings won't actually be included in error clusters
+
 class _Numeric(_BaseType):
     """ Handles packing and unpacking Numerics such as U8, I8, EnumU8, etc"""
     def __init__(self, name, type_name):
         super(_Numeric, self).__init__(name)
         type_name = type_name.replace("Enum", "")
-        self._signed = type_name[0].lower() == 'i'
-        self._size_in_bits = int(type_name[1:])
-        self._data_mask = (1 << self._size_in_bits) - 1
-        self._signed_bit_mask = 1 << (self._size_in_bits - 1)
         for datatype in DataType:
             if str(datatype).lower() in type_name.lower():
                 self._datatype = datatype
                 break
         else:
             raise UnsupportedTypeError("Unrecognized type encountered: %s.  Consider opening an issue on github.com/ni/nifpga" % type_name)
+        self._signed = type_name[0].lower() == 'i'
+        self._size_in_bits = int(type_name[1:])
+        self._data_mask = (1 << self._size_in_bits) - 1
+        self._signed_bit_mask = 1 << (self._size_in_bits - 1)
         self._unpack = self._unpack_numeric_signed if self._signed else self._unpack_numeric_unsigned
 
     def _unpack_numeric_unsigned(self, bits_from_fpga):
