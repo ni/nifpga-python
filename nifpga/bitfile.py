@@ -117,6 +117,7 @@ def _parse_type(type_xml):
     if type_name == "SGL" or type_name == "DBL":
         return _Float(name, type_name)
     if type_name == "String":
+        # Strings are not supported on the FPGA, but show up in error clusters
         return _String(name)
     if type_name == "CFXP":
         raise UnsupportedTypeError("The FPGA Interface Python API does not yet support Complex Fixed Point")
