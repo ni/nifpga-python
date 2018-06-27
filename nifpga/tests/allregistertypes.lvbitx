@@ -4627,6 +4627,176 @@
 				    <RegisterNode>false</RegisterNode>
 				    <SubControlList/>
 			</Register>
+         <Register>
+				    <Name>Output Error Cluster</Name>
+				    <Hidden>false</Hidden>
+				    <Indicator>true</Indicator>
+				    <Datatype>
+					    <Cluster>
+						      <Name>Output Error Cluster</Name>
+						      <TypeList>
+							      <Boolean>
+								        <Name>status</Name>
+							</Boolean>
+							      <I32>
+								        <Name>code</Name>
+							</I32>
+							      <String>
+								        <Name>source</Name>
+							</String>
+						</TypeList>
+					</Cluster>
+				</Datatype>
+				    <FlattenedType>1300800000000004000C40210673746174757300000B40030004636F64650000104030FFFFFFFF06736F7572636500002240500003000000010002144F7574707574204572726F7220436C7573746572000001000300000000000000000000000000</FlattenedType>
+				    <Grouping/>
+				    <Offset>98724</Offset>
+				    <SizeInBits>33</SizeInBits>
+				    <Class>30</Class>
+				    <Internal>false</Internal>
+				    <TypedefPath/>
+				    <TypedefRelativePath/>
+				    <ID>105</ID>
+				    <Bidirectional>true</Bidirectional>
+				    <Synchronous>false</Synchronous>
+				    <MechanicalAction>Switch When Pressed</MechanicalAction>
+				    <AccessMayTimeout>false</AccessMayTimeout>
+				    <RegisterNode>false</RegisterNode>
+				    <SubControlList>
+					    <SubControl>
+						      <Name>status</Name>
+						      <FlattenedType>1800800000000001000C40210673746174757300000100000000000000</FlattenedType>
+						      <ClusterInformation>
+							      <NameHierarchy>
+								        <Name>Output Error Cluster</Name>
+								        <Name>status</Name>
+							</NameHierarchy>
+							      <ItemOrder>
+								        <Item>105</Item>
+								        <Item>0</Item>
+							</ItemOrder>
+						</ClusterInformation>
+						      <TypedefPath/>
+						      <TypedefRelativePath/>
+					</SubControl>
+					    <SubControl>
+						      <Name>code</Name>
+						      <FlattenedType>1800800000000001000B40030004636F646500000100000000000000000000</FlattenedType>
+						      <ClusterInformation>
+							      <NameHierarchy>
+								        <Name>Output Error Cluster</Name>
+								        <Name>code</Name>
+							</NameHierarchy>
+							      <ItemOrder>
+								        <Item>105</Item>
+								        <Item>1</Item>
+							</ItemOrder>
+						</ClusterInformation>
+						      <TypedefPath/>
+						      <TypedefRelativePath/>
+					</SubControl>
+					    <SubControl>
+						      <Name>source</Name>
+						      <FlattenedType>180080000000000100104030FFFFFFFF06736F7572636500000100000000000000000000</FlattenedType>
+						      <ClusterInformation>
+							      <NameHierarchy>
+								        <Name>Output Error Cluster</Name>
+								        <Name>source</Name>
+							</NameHierarchy>
+							      <ItemOrder>
+								        <Item>105</Item>
+								        <Item>2</Item>
+							</ItemOrder>
+						</ClusterInformation>
+						      <TypedefPath/>
+						      <TypedefRelativePath/>
+					</SubControl>
+				</SubControlList>
+			</Register>
+			<Register>
+				    <Name>Input Error Cluster</Name>
+				    <Hidden>false</Hidden>
+				    <Indicator>false</Indicator>
+				    <Datatype>
+					    <Cluster>
+						      <Name>Input Error Cluster</Name>
+						      <TypeList>
+							      <Boolean>
+								        <Name>status</Name>
+							</Boolean>
+							      <I32>
+								        <Name>code</Name>
+							</I32>
+							      <String>
+								        <Name>source</Name>
+							</String>
+						</TypeList>
+					</Cluster>
+				</Datatype>
+				    <FlattenedType>1300800000000004000C40210673746174757300000B40030004636F64650000104030FFFFFFFF06736F757263650000204050000300000001000213496E707574204572726F7220436C75737465720001000300000000000000000000000000</FlattenedType>
+				    <Grouping/>
+				    <Offset>98728</Offset>
+				    <SizeInBits>33</SizeInBits>
+				    <Class>30</Class>
+				    <Internal>false</Internal>
+				    <TypedefPath/>
+				    <TypedefRelativePath/>
+				    <ID>106</ID>
+				    <Bidirectional>true</Bidirectional>
+				    <Synchronous>false</Synchronous>
+				    <MechanicalAction>Switch When Pressed</MechanicalAction>
+				    <AccessMayTimeout>false</AccessMayTimeout>
+				    <RegisterNode>false</RegisterNode>
+				    <SubControlList>
+					    <SubControl>
+						      <Name>status</Name>
+						      <FlattenedType>1800800000000001000C40210673746174757300000100000000000000</FlattenedType>
+						      <ClusterInformation>
+							      <NameHierarchy>
+								        <Name>Input Error Cluster</Name>
+								        <Name>status</Name>
+							</NameHierarchy>
+							      <ItemOrder>
+								        <Item>106</Item>
+								        <Item>0</Item>
+							</ItemOrder>
+						</ClusterInformation>
+						      <TypedefPath/>
+						      <TypedefRelativePath/>
+					</SubControl>
+					    <SubControl>
+						      <Name>code</Name>
+						      <FlattenedType>1800800000000001000B40030004636F646500000100000000000000000000</FlattenedType>
+						      <ClusterInformation>
+							      <NameHierarchy>
+								        <Name>Input Error Cluster</Name>
+								        <Name>code</Name>
+							</NameHierarchy>
+							      <ItemOrder>
+								        <Item>106</Item>
+								        <Item>1</Item>
+							</ItemOrder>
+						</ClusterInformation>
+						      <TypedefPath/>
+						      <TypedefRelativePath/>
+					</SubControl>
+					    <SubControl>
+						      <Name>source</Name>
+						      <FlattenedType>180080000000000100104030FFFFFFFF06736F7572636500000100000000000000000000</FlattenedType>
+						      <ClusterInformation>
+							      <NameHierarchy>
+								        <Name>Input Error Cluster</Name>
+								        <Name>source</Name>
+							</NameHierarchy>
+							      <ItemOrder>
+								        <Item>106</Item>
+								        <Item>2</Item>
+							</ItemOrder>
+						</ClusterInformation>
+						      <TypedefPath/>
+						      <TypedefRelativePath/>
+					</SubControl>
+				</SubControlList>
+			</Register>
 		</RegisterList>
 		  <Icon>
 			  <ImageType>0</ImageType>
