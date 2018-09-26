@@ -381,7 +381,12 @@ class _FXP(_BaseType):
     def __init__(self, name, type_xml):
         super(_FXP, self).__init__(name)
         self._datatype = DataType.Fxp
-        self._signed = True if type_xml.find("Signed").text.lower() == 'true' else False
+        signed_tag = type_xml.find("Signed")
+        if signed_tag is None:
+            raise UnsupportedTypeError("Unsupported FXP type encountered. This bitfile "
+                                       "was likely compiled with LabVIEW Communications 2.0. "
+                                       "Recompile with LabVIEW Communications 2.1 or later.")
+        self._signed = True if signed_tag.text.lower() == 'true' else False
         overflow_enabled_xml = type_xml.find("IncludeOverflowStatus")
         if overflow_enabled_xml is not None:
             self._overflow_enabled = True if overflow_enabled_xml.text.lower() == 'true' else False
