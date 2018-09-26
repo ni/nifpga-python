@@ -1874,6 +1874,31 @@
 				    <SubControlList/>
 			</Register>
 			  <Register>
+				    <Name>Comms 2.0 FXP</Name>
+				    <Hidden>false</Hidden>
+				    <Indicator>true</Indicator>
+				    <Datatype>
+					    <FXP>
+						      <Name>Comms 2.0 FXP</Name>
+					</FXP>
+				</Datatype>
+				    <FlattenedType>13008000000000010058405F0311003F00000020000000010000000100000000000000000000003F000000207FFFFFFFFFFFFFFF00000001FFFFFFE200000000000000011A4F7574707574204658502036332D62697420556E7369676E65640000010000000000000000000000000000</FlattenedType>
+				    <Grouping/>
+				    <Offset>98556</Offset>
+				    <SizeInBits>63</SizeInBits>
+				    <Class>18</Class>
+				    <Internal>false</Internal>
+				    <TypedefPath/>
+				    <TypedefRelativePath/>
+				    <ID>63</ID>
+				    <Bidirectional>true</Bidirectional>
+				    <Synchronous>false</Synchronous>
+				    <MechanicalAction>Switch When Pressed</MechanicalAction>
+				    <AccessMayTimeout>false</AccessMayTimeout>
+				    <RegisterNode>false</RegisterNode>
+				    <SubControlList/>
+			</Register>
+			  <Register>
 				    <Name>Output FXP 63-bit Signed</Name>
 				    <Hidden>false</Hidden>
 				    <Indicator>true</Indicator>
