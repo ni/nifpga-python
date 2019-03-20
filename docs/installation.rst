@@ -42,5 +42,7 @@ NI Linux RT
 .. code-block:: sh
 
    opkg update
-   opkg install python-pip
-   pip install nifpga
+   opkg install python3 python3-misc
+   # follow the latest instructions to install pip:
+   # https://pip.pypa.io/en/stable/installing/
+   python3 -m pip install nifpga
