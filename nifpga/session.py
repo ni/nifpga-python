@@ -924,7 +924,9 @@ class _FxpFIFO(_FIFO):
 
 class _DataConvertingFifo(_FIFO):
     """
-    FXP FIFOs are packed up to 64bits
+    Converts FIFOs that transfer data that is packed in the FPGA representation
+    into Python types.  In this case, it converts a FIFO of clusters into lists
+    of OrderedDicts and back.
     """
     def __init__(self,
                  session,
