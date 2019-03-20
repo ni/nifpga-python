@@ -288,6 +288,8 @@ class Session(object):
     def _create_fifo(self, bitfile_fifo):
         if bitfile_fifo.is_fxp():
             return _FxpFIFO(self._session, self._nifpga, bitfile_fifo)
+        elif bitfile_fifo.is_composite():
+            return _DataConvertingFifo(self._session, self._nifpga, bitfile_fifo)
         else:
             return _FIFO(self._session, self._nifpga, bitfile_fifo)
 
@@ -918,3 +920,130 @@ class _FxpFIFO(_FIFO):
         data = [self._fxp.unpack_data(elem) for elem in buf]
         return self.ReadValues(data=data,
                                elements_remaining=elements_remaining.value)
+
+
+class _DataConvertingFifo(_FIFO):
+    """
+    FXP FIFOs are packed up to 64bits
+    """
+    def __init__(self,
+                 session,
+                 nifpga,
+                 bitfile_fifo):
+        super(_DataConvertingFifo, self).__init__(session,
+                                                  nifpga,
+                                                  bitfile_fifo,
+                                                  datatype=DataType.U8)
+        self._type = bitfile_fifo.type
+        self._transfer_size_bytes = bitfile_fifo.transfer_size_bytes
+        self._write_func = nifpga["WriteFifoComposite"]
+        self._read_func = nifpga["ReadFifoComposite"]
+        self._acquire_read_func = nifpga["AcquireFifoReadElementsComposite"]
+        self._acquire_write_func = nifpga["AcquireFifoWriteElementsComposite"]
+
+    @property
+    def datatype(self):
+        return DataType.Cluster
+
+    def write(self, data, timeout_ms=0):
+        # If data is a dict, then the customer passed us a single cluster
+        # put it into a list before using it.
+        if isinstance(data, dict):
+            data = [data]
+        buf_type = self._ctype_type * (self._transfer_size_bytes * len(data))
+        buf = buf_type()
+        # for each element, pack the data, reverse the bytes, and swap the
+        # endianness
+        for index, item in enumerate(data):
+            packed_element = self._type.pack_data(item, 0)
+            element_index = index * self._transfer_size_bytes
+            self._convert_to_u8_array(buf, element_index, packed_element)
+        empty_elements_remaining = ctypes.c_size_t()
+        self._write_func(self._session,
+                         self._number,
+                         buf,
+                         self._transfer_size_bytes,
+                         len(data),
+                         timeout_ms,
+                         empty_elements_remaining)
+        return empty_elements_remaining.value
+
+    def _convert_to_u8_array(self, u8_array, element_index, data):
+        """ Converts the data into the format expected by the FPGA and inserts it
+        into the given u8_array at the provided element_index.
+        """
+        # if the element is > 4 bytes, shift the data over
+        if self._transfer_size_bytes > 4:
+            data = data << (8 * self._transfer_size_bytes - self._type.size_in_bits)
+        if self._transfer_size_bytes == 1:
+            u8_array[element_index] = data & 0xFF
+        elif self._transfer_size_bytes == 2:
+            u8_array[element_index] = data & 0xFF
+            data = data >> 8
+            u8_array[element_index + 1] = data & 0xFF
+        else:  # >= 4
+            # Insert the data such that the Most Significant Words are at the lower
+            # indexes while each word's endianness is swapped
+            for index in reversed(range(0, self._transfer_size_bytes, 4)):
+                local_index = element_index + index
+                u8_array[local_index] = data & 0xFF
+                data = data >> 8
+                u8_array[local_index + 1] = data & 0xFF
+                data = data >> 8
+                u8_array[local_index + 2] = data & 0xFF
+                data = data >> 8
+                u8_array[local_index + 3] = data & 0xFF
+                data = data >> 8
+
+    def read(self, number_of_elements, timeout_ms=0):
+        buf_type = self._ctype_type * (self._transfer_size_bytes * number_of_elements)
+        buf = buf_type()
+        elements_remaining = ctypes.c_size_t()
+        self._read_func(self._session,
+                        self._number,
+                        buf,
+                        self._transfer_size_bytes,
+                        number_of_elements,
+                        timeout_ms,
+                        elements_remaining)
+        data = []
+        for index in range(number_of_elements):
+            element_index = index * self._transfer_size_bytes
+            packed_data = self._combine_array_of_u8_into_one_value(buf, element_index)
+            unpacked_data = self._type.unpack_data(packed_data)
+            data.append(unpacked_data)
+        return self.ReadValues(data=data,
+                               elements_remaining=elements_remaining.value)
+
+    def _combine_array_of_u8_into_one_value(self, data, element_index):
+        """ This method is a helper to convert the array read from hardware
+        and return a single element removing any excessive bits.
+
+        First we combine the data into a single number while swapping the
+        endianness.
+
+        Whenever the array is longer than 1 word, the data is left justified, we
+        need to shift the combined data to the right before doing the
+        conversion.
+        For example, if the element had a size in bits of 54, the 54 MSB would
+        be the data bits. The 10 LSB of the combinedData must be shifted
+        off in order to not mess up further calculations.
+        """
+        combinedData = 0
+        if self._transfer_size_bytes >= 4:
+            index = element_index
+            element_end = element_index + self._transfer_size_bytes
+            while index < element_end:
+                combinedData = (combinedData << 8) + data[index + 3]
+                combinedData = (combinedData << 8) + data[index + 2]
+                combinedData = (combinedData << 8) + data[index + 1]
+                combinedData = (combinedData << 8) + data[index]
+                index += 4
+        elif self._transfer_size_bytes == 2:
+            combinedData = data[element_index + 1]
+            combinedData = (combinedData << 8) + data[element_index]
+        else:
+            combinedData = data[element_index]
+        if self._transfer_size_bytes > 4:
+            combinedData = combinedData >> (8 * self._transfer_size_bytes - self._type.size_in_bits)
+        return combinedData

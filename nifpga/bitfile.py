@@ -650,6 +650,10 @@ class Register(object):
                 "\tOffset: %d\n" % self._offset)
 
 
+def _is_not_power_of_2(value):
+    return value & (value - 1) != 0
+
+
 class Fifo(object):
     def __init__(self, channel_xml):
         self._name = channel_xml.attrib["name"]
@@ -659,6 +663,18 @@ class Fifo(object):
             self._type = _parse_type(datatype_xml)
         else:
             self._type = _parse_type(list(datatype_xml)[0])
+        transfer_size_bytes_xml = channel_xml.find("TransferSizeBytes")
+        # only newer XML that supports composite types will have TransferSizeBytes
+        if transfer_size_bytes_xml is not None:
+            self._transfer_size_bytes = int(transfer_size_bytes_xml.text)
+            # As of 2018 transfer size must be a power of two.
+            if _is_not_power_of_2(self._transfer_size_bytes):
+                raise UnsupportedTypeError("This FIFO is incompatible with this version of 'nifpga'.  Upgrade to the latest version or open an issue on github.")
+        else:
+            if self._type.datatype is DataType.Fxp:
+                self._transfer_size_bytes = 8
+            else:
+                self._transfer_size_bytes = ctypes.sizeof(self._type.datatype._return_ctype())
 
     @property
     def datatype(self):
@@ -680,6 +696,11 @@ class Fifo(object):
     @property
     def type(self):
         return self._type
+
+    @property
+    def transfer_size_bytes(self):
+        """ The size of one FIFO element in bytes. """
+        return self._transfer_size_bytes
 
     def is_fxp(self):
         return isinstance(self._type, _FXP)

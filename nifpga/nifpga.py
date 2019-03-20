@@ -373,8 +373,8 @@ class _NiFpga(StatusCheckedLibrary):
         ]  # list of function_infos
 
         for datatype in DataType:
-            if datatype == DataType.Fxp:
-                continue  # Fixed point does not have read write entry points.
+            if datatype == DataType.Fxp or datatype == DataType.Cluster:
+                continue  # Fxp and Cluster do not have named read write entry points.
             type_ctype = datatype._return_ctype()
             library_function_infos.extend([
                 LibraryFunctionInfo(
@@ -480,7 +480,59 @@ class _NiFpga(StatusCheckedLibrary):
                         NamedArgtype("value", type_ctype),
                     ]),
             ])
-
+        # Add Composite FIFO Functions
+        library_function_infos.extend([
+            LibraryFunctionInfo(
+                pretty_name="ReadFifoComposite",
+                name_in_library="NiFpgaDll_ReadFifoComposite",
+                named_argtypes=[
+                    NamedArgtype("session", _SessionType),
+                    NamedArgtype("fifo", ctypes.c_uint32),
+                    NamedArgtype("data", ctypes.POINTER(ctypes.c_uint8)),
+                    NamedArgtype("bytes per element", ctypes.c_uint32),
+                    NamedArgtype("number of elements", ctypes.c_size_t),
+                    NamedArgtype("timeout ms", ctypes.c_uint32),
+                    NamedArgtype("elements remaining", ctypes.POINTER(ctypes.c_size_t)),
+                ]),
+            LibraryFunctionInfo(
+                pretty_name="WriteFifoComposite",
+                name_in_library="NiFpgaDll_WriteFifoComposite",
+                named_argtypes=[
+                    NamedArgtype("session", _SessionType),
+                    NamedArgtype("fifo", ctypes.c_uint32),
+                    NamedArgtype("data", ctypes.POINTER(ctypes.c_uint8)),
+                    NamedArgtype("bytes per element", ctypes.c_uint32),
+                    NamedArgtype("number of elements", ctypes.c_size_t),
+                    NamedArgtype("timeout ms", ctypes.c_uint32),
+                    NamedArgtype("empty elements remaining", ctypes.POINTER(ctypes.c_size_t)),
+                ]),
+            LibraryFunctionInfo(
+                pretty_name="AcquireFifoReadElementsComposite",
+                name_in_library="NiFpgaDll_AcquireFifoReadElementsComposite",
+                named_argtypes=[
+                    NamedArgtype("session", _SessionType),
+                    NamedArgtype("fifo", ctypes.c_uint32),
+                    NamedArgtype("elements", ctypes.POINTER(ctypes.POINTER(ctypes.c_uint8))),
+                    NamedArgtype("bytes per element", ctypes.c_uint32),
+                    NamedArgtype("elements requested ", ctypes.c_size_t),
+                    NamedArgtype("timeout ms", ctypes.c_uint32),
+                    NamedArgtype("elements acquired", ctypes.POINTER(ctypes.c_size_t)),
+                    NamedArgtype("elements remaining", ctypes.POINTER(ctypes.c_size_t)),
+                ]),
+            LibraryFunctionInfo(
+                pretty_name="AcquireFifoWriteElementsComposite",
+                name_in_library="NiFpgaDll_AcquireFifoWriteElementsComposite",
+                named_argtypes=[
+                    NamedArgtype("session", _SessionType),
+                    NamedArgtype("fifo", ctypes.c_uint32),
+                    NamedArgtype("elements", ctypes.POINTER(ctypes.POINTER(ctypes.c_uint8))),
+                    NamedArgtype("bytes per element", ctypes.c_uint32),
+                    NamedArgtype("elements requested ", ctypes.c_size_t),
+                    NamedArgtype("timeout ms", ctypes.c_uint32),
+                    NamedArgtype("elements acquired", ctypes.POINTER(ctypes.c_size_t)),
+                    NamedArgtype("elements remaining", ctypes.POINTER(ctypes.c_size_t)),
+                ]),
+        ])
         try:
             super(_NiFpga, self).__init__(library_name="NiFpga",
                                           library_function_infos=library_function_infos)
