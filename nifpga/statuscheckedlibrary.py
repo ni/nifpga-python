@@ -32,11 +32,11 @@ class FunctionInfo(object):
         self.argument_names = argument_names
 
     def __str__(self):
-        return ("FunctionInfo" +
-                "\n\tFunction: %s" % self.function +
-                "\n\tName: %s" % self.name +
-                "\n\tArguments:" +
-                "\n\t\t%s" % "\n\t\t".join(self.argument_names))
+        return ("FunctionInfo"
+                + "\n\tFunction: %s" % self.function
+                + "\n\tName: %s" % self.name
+                + "\n\tArguments:"
+                + "\n\t\t%s" % "\n\t\t".join(self.argument_names))
 
 
 class StatusCheckedFunctions(object):
