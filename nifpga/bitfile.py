@@ -644,10 +644,10 @@ class Register(object):
         return self._internal
 
     def __str__(self):
-        return ("Register '%s'\n" % self._name +
-                "\tType: %s\n" % self._datatype +
-                "\tNum Elements: %d\n" % len(self) +
-                "\tOffset: %d\n" % self._offset)
+        return ("Register '%s'\n" % self._name
+                + "\tType: %s\n" % self._datatype
+                + "\tNum Elements: %d\n" % len(self)
+                + "\tOffset: %d\n" % self._offset)
 
 
 class Fifo(object):
