@@ -1,5 +1,5 @@
 FPGA Interface Python API
-=======
+=========================
 
 [![Build Status](https://travis-ci.org/ni/nifpga-python.svg?branch=master)](https://travis-ci.org/ni/nifpga-python)
 
