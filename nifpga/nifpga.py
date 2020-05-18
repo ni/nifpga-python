@@ -51,6 +51,16 @@ class DataType(Enum):
         }
         return _datatype_ctype[self]
 
+    def isSigned(self):
+        if self == DataType.I8 \
+           or self == DataType.I16 \
+           or self == DataType.I32 \
+           or self == DataType.I64 \
+           or self == DataType.Sgl \
+           or self == DataType.Dbl:
+            return True
+        return False
+
 
 class FifoPropertyType(Enum):
     """ Types of FIFO Properties, intended to abstract away the C Type. """
@@ -83,6 +93,8 @@ class FifoProperty(Enum):
     DmaBufferType = 5  # I32
     DmaBuffer = 6  # Ptr
     FlowControl = 7  # I32
+    ElementsCurrentlyAcquired = 8  # U64
+    PreferredNumaNode = 9  # I32
 
     def __str__(self):
         return self.name
@@ -125,6 +137,8 @@ _fifo_properties_to_types = {
     FifoProperty.DmaBufferType: FifoPropertyType.I32,
     FifoProperty.DmaBuffer: FifoPropertyType.Ptr,
     FifoProperty.FlowControl: FifoPropertyType.I32,
+    FifoProperty.ElementsCurrentlyAcquired: FifoPropertyType.U64,
+    FifoProperty.PreferredNumaNode: FifoPropertyType.I32,
 }
 
 
@@ -145,8 +159,8 @@ _SessionType = ctypes.c_uint32
 _IrqContextType = ctypes.c_void_p
 
 OPEN_ATTRIBUTE_NO_RUN = 1
-RUN_ATTRIBUTE_WAIT_UNTIL_DONE = 1
 OPEN_ATTRIBUTE_BITFILE_PATH_IS_UTF8 = 2
+RUN_ATTRIBUTE_WAIT_UNTIL_DONE = 1
 CLOSE_ATTRIBUTE_NO_RESET_IF_LAST_SESSION = 1
 INFINITE_TIMEOUT = 0xffffffff
 
@@ -307,6 +321,13 @@ class _NiFpga(StatusCheckedLibrary):
             LibraryFunctionInfo(
                 pretty_name="StopFifo",
                 name_in_library="NiFpgaDll_StopFifo",
+                named_argtypes=[
+                    NamedArgtype("session", _SessionType),
+                    NamedArgtype("fifo", ctypes.c_uint32),
+                ]),
+            LibraryFunctionInfo(
+                pretty_name="UnreserveFifo",
+                name_in_library="NiFpgaDll_UnreserveFifo",
                 named_argtypes=[
                     NamedArgtype("session", _SessionType),
                     NamedArgtype("fifo", ctypes.c_uint32),
@@ -532,6 +553,47 @@ class _NiFpga(StatusCheckedLibrary):
                     NamedArgtype("timeout ms", ctypes.c_uint32),
                     NamedArgtype("elements acquired", ctypes.POINTER(ctypes.c_size_t)),
                     NamedArgtype("elements remaining", ctypes.POINTER(ctypes.c_size_t)),
+                ]),
+        ])
+        # Add Acquire FIFO Region functions
+        library_function_infos.extend([
+            LibraryFunctionInfo(
+                pretty_name="AcquireFifoReadRegion",
+                name_in_library="NiFpgaDll_AcquireFifoReadRegion",
+                named_argtypes=[
+                    NamedArgtype("session", _SessionType),
+                    NamedArgtype("fifo", ctypes.c_uint32),
+                    NamedArgtype("region", ctypes.POINTER(ctypes.c_void_p)),
+                    NamedArgtype("elements", ctypes.POINTER(ctypes.c_void_p)),
+                    NamedArgtype("is signed", ctypes.c_bool),
+                    NamedArgtype("bytes per element", ctypes.c_uint32),
+                    NamedArgtype("elements requested ", ctypes.c_size_t),
+                    NamedArgtype("timeout ms", ctypes.c_uint32),
+                    NamedArgtype("elements acquired", ctypes.POINTER(ctypes.c_size_t)),
+                    NamedArgtype("elements remaining", ctypes.POINTER(ctypes.c_size_t)),
+                ]),
+            LibraryFunctionInfo(
+                pretty_name="AcquireFifoWriteRegion",
+                name_in_library="NiFpgaDll_AcquireFifoWriteRegion",
+                named_argtypes=[
+                    NamedArgtype("session", _SessionType),
+                    NamedArgtype("fifo", ctypes.c_uint32),
+                    NamedArgtype("region", ctypes.POINTER(ctypes.c_void_p)),
+                    NamedArgtype("elements", ctypes.POINTER(ctypes.c_void_p)),
+                    NamedArgtype("is signed", ctypes.c_bool),
+                    NamedArgtype("bytes per element", ctypes.c_uint32),
+                    NamedArgtype("elements requested ", ctypes.c_size_t),
+                    NamedArgtype("timeout ms", ctypes.c_uint32),
+                    NamedArgtype("elements acquired", ctypes.POINTER(ctypes.c_size_t)),
+                    NamedArgtype("elements remaining", ctypes.POINTER(ctypes.c_size_t)),
+                ]),
+            LibraryFunctionInfo(
+                pretty_name="ReleaseFifoRegion",
+                name_in_library="NiFpgaDll_ReleaseFifoRegion",
+                named_argtypes=[
+                    NamedArgtype("session", _SessionType),
+                    NamedArgtype("fifo", ctypes.c_uint32),
+                    NamedArgtype("region", ctypes.c_void_p)
                 ]),
         ])
         try:
