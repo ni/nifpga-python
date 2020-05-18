@@ -612,7 +612,7 @@ class _NiFpga(StatusCheckedLibrary):
                 raise LibraryNotFoundError(
                     "Unable to find libNiFpga.so on your system, "
                     "If you are on desktop linux, ensure you have installed the latest "
-                    "RIO Linux distribution for your product, such as http://www.ni.com/download/ni-rio-15.0/5603/en/ "
+                    "RIO Linux distribution for your product, such as https://www.ni.com/en-us/support/downloads/drivers/download.ni-linux-device-drivers.html "
                     "If you are on a Linux RT embedded target (cRIO, sbRIO, FlexRIO, Industrial Controller, etc) install NI-RIO to your target "
                     "though MAX following these instructions: https://www.ni.com/getting-started/set-up-hardware/compactrio/controller-software "
                     "Original Exception: " + str(e))
