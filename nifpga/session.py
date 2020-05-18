@@ -17,6 +17,12 @@ from builtins import bytes
 from math import ceil
 from future.utils import iteritems
 import locale
+try:
+    # Python 2
+    xrange
+except NameError:
+    # Python 3
+    xrange = range
 
 
 class Session(object):
@@ -107,7 +113,6 @@ class Session(object):
             except UnicodeEncodeError:
                 bitfile_path = bytes(bitfile.filepath, 'utf-8')
                 open_attribute = open_attribute | OPEN_ATTRIBUTE_BITFILE_PATH_IS_UTF8
-            bitfile_signature = bytes(bitfile.signature, 'ascii')
             bitfile_signature = bytes(bitfile.signature, 'ascii')
             resource = bytes(resource, 'ascii')
             self._nifpga.Open(bitfile_path,
@@ -549,6 +554,7 @@ class _FIFO(object):
             self._datatype = bitfile_fifo.datatype
         self._number = bitfile_fifo.number
         self._session = session
+        self._transfer_size_bytes = bitfile_fifo.transfer_size_bytes
         self._write_func = nifpga["WriteFifo%s" % self._datatype]
         self._read_func = nifpga["ReadFifo%s" % self._datatype]
         self._acquire_read_func = nifpga["AcquireFifoReadElements%s" % self._datatype]
@@ -557,6 +563,7 @@ class _FIFO(object):
         self._nifpga = nifpga
         self._ctype_type = self._datatype._return_ctype()
         self._name = bitfile_fifo.name
+        self._type = bitfile_fifo.type
 
     def configure(self, requested_depth):
         """ Specifies the depth of the host memory part of the DMA FIFO.
@@ -582,6 +589,15 @@ class _FIFO(object):
     def stop(self):
         """ Stops the FIFO. """
         self._nifpga.StopFifo(self._session, self._number)
+
+    def unreserve(self):
+        """ Unreserves the FIFO.
+
+        FIFOs are reserved by the first process that uses them.  This call will
+        unreserve them from the calling process so a different process may use
+        the FIFO.
+        """
+        self._nifpga.UnreserveFifo(self._session, self._number)
 
     def write(self, data, timeout_ms=0):
         """ Writes the specified data to the FIFO.
@@ -703,13 +719,13 @@ class _FIFO(object):
             timeout_ms (int): The timeout to wait in milliseconds.
 
         Returns:
-            AcquireWriteValues(namedtuple): has the following members::
+            AcquireReadValues(namedtuple): has the following members::
 
-                AcquireWriteValues.data (ctypes.pointer): Contains the data
+                AcquireReadValues.data (ctypes.pointer): Contains the data
                     from the FIFO.
-                AcquireWriteValues.elements_acquired (int): The number of
+                AcquireReadValues.elements_acquired (int): The number of
                     elements that were actually acquired.
-                AcquireWriteValues.elements_remaining (int): The amount of
+                AcquireReadValues.elements_remaining (int): The amount of
                     elements remaining in the FIFO.
         """
         buf = self._ctype_type()
@@ -730,6 +746,110 @@ class _FIFO(object):
     def _release_elements(self, number_of_elements):
         """ Releases the FIFOs elements. """
         self._release_elements_func(self._session, self._number, number_of_elements)
+
+    AcquireRegionValues = namedtuple("AcquireRegionValues",
+                                     ["region", "elements_acquired",
+                                      "elements_remaining"])
+
+    def acquire_read_region(self, number_of_elements, timeout_ms=0):
+        """ Acquire regions of the FIFO's buffer directly.
+
+        This function can be useful if you are going to access large sections of
+        FIFO buffer at one time and don't want a copy of it in memory.
+
+        Args:
+            number_of_elements (int): The number of elements to read from the
+                                      FIFO.
+            timeout_ms (int): The timeout to wait in milliseconds.
+
+        Returns:
+            AcquireRegionValues(namedtuple): has the following members::
+
+                AcquireRegionValues.region (_FIFODataRegion): A region that can
+                    be used with a content manager to access elements in the FIFO.
+                AcquireRegionValues.elements_acquired (int): The number of
+                    elements that were actually acquired.
+                AcquireRegionValues.elements_remaining (int): The amount of
+                    elements remaining in the FIFO.
+        """
+        buf = ctypes.c_void_p()
+        buf_ptr = ctypes.pointer(buf)
+        region = ctypes.c_void_p()
+        region_ptr = ctypes.pointer(region)
+        elements_acquired = ctypes.c_size_t()
+        elements_remaining = ctypes.c_size_t()
+        signed = self._datatype.isSigned()
+        self._nifpga["AcquireFifoReadRegion"](self._session,
+                                              self._number,
+                                              region_ptr,
+                                              buf_ptr,
+                                              signed,
+                                              self._transfer_size_bytes,
+                                              number_of_elements,
+                                              timeout_ms,
+                                              elements_acquired,
+                                              elements_remaining)
+        casted_buffer = ctypes.cast(buf_ptr[0], ctypes.POINTER(self._ctype_type))
+        region = ctypes.cast(region_ptr[0], ctypes.c_void_p)
+        accessor = _FIFODataAccessor(casted_buffer, self._type, self._transfer_size_bytes, elements_acquired.value)
+        fifo_region = _FIFODataRegion(accessor, region, self)
+        return self.AcquireRegionValues(region=fifo_region,
+                                        elements_acquired=elements_acquired.value,
+                                        elements_remaining=elements_remaining.value)
+
+    def acquire_write_region(self, number_of_elements, timeout_ms=0):
+        """ Acquire regions of the FIFO's buffer directly.
+
+        This function can be useful if you are going to access large sections of
+        FIFO buffer at one time and don't want a copy of it in memory.
+
+        Args:
+            number_of_elements (int): The number of elements to read from the
+                                      FIFO.
+            timeout_ms (int): The timeout to wait in milliseconds.
+
+        Returns:
+            AcquireRegionValues(namedtuple): has the following members::
+
+                AcquireRegionValues.region (_FIFODataRegion): A region that can
+                    be used with a content manager to access elements in the FIFO.
+                AcquireRegionValues.elements_acquired (int): The number of
+                    elements that were actually acquired.
+                AcquireRegionValues.elements_remaining (int): The amount of
+                    elements remaining in the FIFO.
+        """
+        buf = ctypes.c_void_p()
+        buf_ptr = ctypes.pointer(buf)
+        region = ctypes.c_void_p()
+        region_ptr = ctypes.pointer(region)
+        elements_acquired = ctypes.c_size_t()
+        elements_remaining = ctypes.c_size_t()
+        signed = self._datatype.isSigned()
+        self._nifpga["AcquireFifoWriteRegion"](self._session,
+                                               self._number,
+                                               region_ptr,
+                                               buf_ptr,
+                                               signed,
+                                               self._transfer_size_bytes,
+                                               number_of_elements,
+                                               timeout_ms,
+                                               elements_acquired,
+                                               elements_remaining)
+        casted_buffer = ctypes.cast(buf_ptr[0], ctypes.POINTER(self._ctype_type))
+        region = ctypes.cast(region_ptr[0], ctypes.c_void_p)
+        accessor = _FIFODataAccessor(casted_buffer, self._type, self._transfer_size_bytes, elements_acquired.value)
+        fifo_region = _FIFODataRegion(accessor, region, self)
+        return self.AcquireRegionValues(region=fifo_region,
+                                        elements_acquired=elements_acquired.value,
+                                        elements_remaining=elements_remaining.value)
+
+    def release_region(self, accessor):
+        """ Releases a region.
+
+        Args:
+            accessor (_FIFODataAccessor): the accessor from the acquired region
+        """
+        self._nifpga["ReleaseFifoRegion"](self._session, self._number, accessor._region)
 
     def get_peer_to_peer_endpoint(self):
         """ Gets an endpoint reference to a peer-to-peer FIFO. """
@@ -845,6 +965,18 @@ class _FIFO(object):
             raise TypeError("flow_control must be set to an nifpga.FlowControl")
         self._set_fifo_property(FifoProperty.FlowControl, value.value)
 
+    @property
+    def elements_currently_acquired(self):
+        return self._get_fifo_property(FifoProperty.ElementsCurrentlyAcquired)
+
+    @property
+    def preferred_numa_node(self):
+        return self._get_fifo_property(FifoProperty.PreferredNumaNode)
+
+    @preferred_numa_node.setter
+    def preferred_numa_node(self, value):
+        self._set_fifo_property(FifoProperty.PreferredNumaNode, value)
+
 
 class _FxpFIFO(_FIFO):
     """
@@ -858,7 +990,6 @@ class _FxpFIFO(_FIFO):
                                        nifpga,
                                        bitfile_fifo,
                                        datatype=DataType.U64)
-        self._fxp = bitfile_fifo.type
 
     @property
     def datatype(self):
@@ -888,7 +1019,7 @@ class _FxpFIFO(_FIFO):
         buf_type = self._ctype_type * len(data)
         buf = buf_type()
         for i, item in enumerate(data):
-            buf[i] = self._fxp.pack_data(item, 0)
+            buf[i] = self._type.pack_data(item, 0)
         empty_elements_remaining = ctypes.c_size_t()
         self._write_func(self._session,
                          self._number,
@@ -928,9 +1059,71 @@ class _FxpFIFO(_FIFO):
                         number_of_elements,
                         timeout_ms,
                         elements_remaining)
-        data = [self._fxp.unpack_data(elem) for elem in buf]
+        data = _FIFODataAccessor(buf, self._type, 8, number_of_elements)
         return self.ReadValues(data=data,
                                elements_remaining=elements_remaining.value)
+
+
+def _combine_array_of_u8_into_one_value(data, element_index, transfer_size_bytes, size_in_bits):
+    """ This method is a helper to convert the array read from hardware
+    and return a single element removing any excessive bits.
+
+    First we combine the data into a single number while swapping the
+    endianness.
+
+    Whenever the array is longer than 1 word, the data is left justified, we
+    need to shift the combined data to the right before doing the
+    conversion.
+    For example, if the element had a size in bits of 54, the 54 MSB would
+    be the data bits. The 10 LSB of the combinedData must be shifted
+    off in order to not mess up further calculations.
+    """
+    combinedData = 0
+    if transfer_size_bytes >= 4:
+        index = element_index
+        element_end = element_index + transfer_size_bytes
+        while index < element_end:
+            combinedData = (combinedData << 8) + data[index + 3]
+            combinedData = (combinedData << 8) + data[index + 2]
+            combinedData = (combinedData << 8) + data[index + 1]
+            combinedData = (combinedData << 8) + data[index]
+            index += 4
+    elif transfer_size_bytes == 2:
+        combinedData = data[element_index + 1]
+        combinedData = (combinedData << 8) + data[element_index]
+    else:
+        combinedData = data[element_index]
+    if transfer_size_bytes > 4:
+        combinedData = combinedData >> (8 * transfer_size_bytes - size_in_bits)
+    return combinedData
+
+
+def _convert_to_u8_array(u8_array, element_index, data, transfer_size_bytes, size_in_bits):
+    """ Converts the data into the format expected by the FPGA FIFO and inserts it
+    into the given u8_array at the provided element_index.
+    """
+    # if the element is > 4 bytes, shift the data over
+    if transfer_size_bytes > 4:
+        data = data << (8 * transfer_size_bytes - size_in_bits)
+    if transfer_size_bytes == 1:
+        u8_array[element_index] = data & 0xFF
+    elif transfer_size_bytes == 2:
+        u8_array[element_index] = data & 0xFF
+        data = data >> 8
+        u8_array[element_index + 1] = data & 0xFF
+    else:  # >= 4
+        # Insert the data such that the Most Significant Words are at the lower
+        # indexes while each word's endianness is swapped
+        for index in reversed(range(0, transfer_size_bytes, 4)):
+            local_index = element_index + index
+            u8_array[local_index] = data & 0xFF
+            data = data >> 8
+            u8_array[local_index + 1] = data & 0xFF
+            data = data >> 8
+            u8_array[local_index + 2] = data & 0xFF
+            data = data >> 8
+            u8_array[local_index + 3] = data & 0xFF
+            data = data >> 8
 
 
 class _DataConvertingFifo(_FIFO):
@@ -947,8 +1140,6 @@ class _DataConvertingFifo(_FIFO):
                                                   nifpga,
                                                   bitfile_fifo,
                                                   datatype=DataType.U8)
-        self._type = bitfile_fifo.type
-        self._transfer_size_bytes = bitfile_fifo.transfer_size_bytes
         self._write_func = nifpga["WriteFifoComposite"]
         self._read_func = nifpga["ReadFifoComposite"]
         self._acquire_read_func = nifpga["AcquireFifoReadElementsComposite"]
@@ -970,7 +1161,7 @@ class _DataConvertingFifo(_FIFO):
         for index, item in enumerate(data):
             packed_element = self._type.pack_data(item, 0)
             element_index = index * self._transfer_size_bytes
-            self._convert_to_u8_array(buf, element_index, packed_element)
+            _convert_to_u8_array(buf, element_index, packed_element, self._transfer_size_bytes, self._type.size_in_bits)
         empty_elements_remaining = ctypes.c_size_t()
         self._write_func(self._session,
                          self._number,
@@ -980,33 +1171,6 @@ class _DataConvertingFifo(_FIFO):
                          timeout_ms,
                          empty_elements_remaining)
         return empty_elements_remaining.value
-
-    def _convert_to_u8_array(self, u8_array, element_index, data):
-        """ Converts the data into the format expected by the FPGA and inserts it
-        into the given u8_array at the provided element_index.
-        """
-        # if the element is > 4 bytes, shift the data over
-        if self._transfer_size_bytes > 4:
-            data = data << (8 * self._transfer_size_bytes - self._type.size_in_bits)
-        if self._transfer_size_bytes == 1:
-            u8_array[element_index] = data & 0xFF
-        elif self._transfer_size_bytes == 2:
-            u8_array[element_index] = data & 0xFF
-            data = data >> 8
-            u8_array[element_index + 1] = data & 0xFF
-        else:  # >= 4
-            # Insert the data such that the Most Significant Words are at the lower
-            # indexes while each word's endianness is swapped
-            for index in reversed(range(0, self._transfer_size_bytes, 4)):
-                local_index = element_index + index
-                u8_array[local_index] = data & 0xFF
-                data = data >> 8
-                u8_array[local_index + 1] = data & 0xFF
-                data = data >> 8
-                u8_array[local_index + 2] = data & 0xFF
-                data = data >> 8
-                u8_array[local_index + 3] = data & 0xFF
-                data = data >> 8
 
     def read(self, number_of_elements, timeout_ms=0):
         buf_type = self._ctype_type * (self._transfer_size_bytes * number_of_elements)
@@ -1019,44 +1183,105 @@ class _DataConvertingFifo(_FIFO):
                         number_of_elements,
                         timeout_ms,
                         elements_remaining)
-        data = []
-        for index in range(number_of_elements):
-            element_index = index * self._transfer_size_bytes
-            packed_data = self._combine_array_of_u8_into_one_value(buf, element_index)
-            unpacked_data = self._type.unpack_data(packed_data)
-            data.append(unpacked_data)
+        data = _FIFODataAccessor(buf, self._type, self._transfer_size_bytes, number_of_elements)
         return self.ReadValues(data=data,
                                elements_remaining=elements_remaining.value)
 
-    def _combine_array_of_u8_into_one_value(self, data, element_index):
-        """ This method is a helper to convert the array read from hardware
-        and return a single element removing any excessive bits.
 
-        First we combine the data into a single number while swapping the
-        endianness.
+class _FIFODataAccessor(object):
+    """
+        Accesses FIFO Data element by element.
+    """
+    def __init__(self, buffer, type, bytes_per_element, number_of_elements):
+        self._buffer = buffer
+        self._type = type
+        self._bytes_per_element = bytes_per_element
+        self._number_of_elements = number_of_elements
 
-        Whenever the array is longer than 1 word, the data is left justified, we
-        need to shift the combined data to the right before doing the
-        conversion.
-        For example, if the element had a size in bits of 54, the 54 MSB would
-        be the data bits. The 10 LSB of the combinedData must be shifted
-        off in order to not mess up further calculations.
-        """
-        combinedData = 0
-        if self._transfer_size_bytes >= 4:
-            index = element_index
-            element_end = element_index + self._transfer_size_bytes
-            while index < element_end:
-                combinedData = (combinedData << 8) + data[index + 3]
-                combinedData = (combinedData << 8) + data[index + 2]
-                combinedData = (combinedData << 8) + data[index + 1]
-                combinedData = (combinedData << 8) + data[index]
-                index += 4
-        elif self._transfer_size_bytes == 2:
-            combinedData = data[element_index + 1]
-            combinedData = (combinedData << 8) + data[element_index]
+    def __iter__(self):
+        if self._type.datatype is DataType.Cluster:
+            for index in xrange(self._number_of_elements):
+                element_index = index * self._bytes_per_element
+                packed_data = _combine_array_of_u8_into_one_value(self._buffer, element_index, self._bytes_per_element, self._type.size_in_bits)
+                yield self._type.unpack_data(packed_data)
+        elif self._type.datatype is DataType.Fxp:
+            for index in xrange(self._number_of_elements):
+                yield self._type.unpack_data(self._buffer[index])
+        elif self._type.datatype is DataType.Bool:
+            for index in xrange(self._number_of_elements):
+                yield bool(self._buffer[index])
         else:
-            combinedData = data[element_index]
-        if self._transfer_size_bytes > 4:
-            combinedData = combinedData >> (8 * self._transfer_size_bytes - self._type.size_in_bits)
-        return combinedData
+            for index in xrange(self._number_of_elements):
+                yield self._buffer[index]
+
+    def __getitem__(self, index):
+        if index < 0 or index > self._number_of_elements:
+            raise KeyError()
+        if self._type.datatype is DataType.Cluster:
+            element_index = index * self._bytes_per_element
+            packed_data = _combine_array_of_u8_into_one_value(self._buffer, element_index, self._bytes_per_element, self._type.size_in_bits)
+            return self._type.unpack_data(packed_data)
+        elif self._type.datatype is DataType.Fxp:
+            return self._type.unpack_data(self._buffer[index])
+        elif self._type.datatype is DataType.Bool:
+            return bool(self._buffer[index])
+        else:
+            return self._buffer[index]
+
+    def __setitem__(self, index, value):
+        if index < 0 or index > self._number_of_elements:
+            raise KeyError()
+        if self._type.datatype is DataType.Cluster:
+            element_index = index * self._bytes_per_element
+            packed_element = self._type.pack_data(value, 0)
+            _convert_to_u8_array(self._buffer, element_index, packed_element, self._bytes_per_element, self._type.size_in_bits)
+        elif self._type.datatype is DataType.Fxp:
+            self._buffer[index] = self._type.pack_data(value, 0)
+        else:
+            self._buffer[index] = value
+
+    def __len__(self):
+        return self._number_of_elements
+
+    def __eq__(self, other):
+        if len(other) != self._number_of_elements:
+            return False
+        for index in xrange(0, self._number_of_elements):
+            if self[index] != other[index]:
+                return False
+        return True
+
+    def __str__(self):
+        string_value = "["
+        for index in xrange(0, self._number_of_elements):
+            string_value += str(self[index])
+            if (index + 1) < self._number_of_elements:
+                string_value += ", "
+        return string_value + "]"
+
+    def __repr__(self):
+        return str(self)
+
+
+class _FIFODataRegion(object):
+    def __init__(self, accessor, region, fifo):
+        self._accessor = accessor
+        self._region = region
+        self._fifo = fifo
+        self._released = False
+
+    def __enter__(self):
+        return self._accessor
+
+    def __exit__(self, exception_type, exception_val, trace):
+        self.release()
+
+    @property
+    def accessor(self):
+        return self.accessor
+
+    def release(self):
+        if not self._released:
+            self._accessor = None
+            self._fifo.release_region(self)
+            self._released = True
