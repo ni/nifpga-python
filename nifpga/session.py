@@ -8,7 +8,7 @@ from .nifpga import (_SessionType, _IrqContextType, _NiFpga, DataType,
                      OPEN_ATTRIBUTE_NO_RUN, RUN_ATTRIBUTE_WAIT_UNTIL_DONE,
                      CLOSE_ATTRIBUTE_NO_RESET_IF_LAST_SESSION, FifoProperty,
                      _fifo_properties_to_types, FlowControl, DmaBufferType,
-                     FpgaViState)
+                     FpgaViState, OPEN_ATTRIBUTE_BITFILE_PATH_IS_UTF8)
 from .bitfile import Bitfile
 from .status import ErrorStatus, InvalidSessionError
 from collections import namedtuple
@@ -16,6 +16,7 @@ import ctypes
 from builtins import bytes
 from math import ceil
 from future.utils import iteritems
+import locale
 
 
 class Session(object):
@@ -99,7 +100,14 @@ class Session(object):
         if isinstance(resource, _SessionType):
             self._session = resource
         else:
-            bitfile_path = bytes(bitfile.filepath, 'ascii')
+            # Newer versions of the driver support utf-8 paths, but the python API
+            # supports old drivers too, so see if codepage will work and if not use UTF-8
+            try:
+                bitfile_path = bytes(bitfile.filepath, locale.getpreferredencoding())
+            except UnicodeEncodeError:
+                bitfile_path = bytes(bitfile.filepath, 'utf-8')
+                open_attribute = open_attribute | OPEN_ATTRIBUTE_BITFILE_PATH_IS_UTF8
+            bitfile_signature = bytes(bitfile.signature, 'ascii')
             bitfile_signature = bytes(bitfile.signature, 'ascii')
             resource = bytes(resource, 'ascii')
             self._nifpga.Open(bitfile_path,
