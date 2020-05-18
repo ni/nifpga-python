@@ -27,6 +27,7 @@ def get_long_description():
 setup(name="nifpga",
       description="Python API for interacting with National Instrument's LabVIEW FPGA Devices",
       long_description=get_long_description(),
+      long_description_content_type="text/markdown",
       version=get_version(),
       packages=find_packages(),
       install_requires=['enum34;python_version<"3.4"', 'future'],
