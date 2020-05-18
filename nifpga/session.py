@@ -10,7 +10,7 @@ from .nifpga import (_SessionType, _IrqContextType, _NiFpga, DataType,
                      _fifo_properties_to_types, FlowControl, DmaBufferType,
                      FpgaViState)
 from .bitfile import Bitfile
-from .status import InvalidSessionError
+from .status import ErrorStatus, InvalidSessionError
 from collections import namedtuple
 import ctypes
 from builtins import bytes
@@ -136,6 +136,9 @@ class Session(object):
             self.close(reset_if_last_session=self._reset_if_last_session_on_exit)
         except InvalidSessionError:
             pass
+        except ErrorStatus:
+            if exception_type is None:
+                raise
 
     def close(self, reset_if_last_session=False):
         """ Closes the FPGA Session.
