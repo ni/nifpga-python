@@ -274,14 +274,14 @@ class _NiFpga(StatusCheckedLibrary):
                 name_in_library="NiFpgaDll_UnreserveIrqContext",
                 named_argtypes=[
                     NamedArgtype("session", _SessionType),
-                    NamedArgtype("context", ctypes.POINTER(_IrqContextType)),
+                    NamedArgtype("context", _IrqContextType),
                 ]),
             LibraryFunctionInfo(
                 pretty_name="WaitOnIrqs",
                 name_in_library="NiFpgaDll_WaitOnIrqs",
                 named_argtypes=[
                     NamedArgtype("session", _SessionType),
-                    NamedArgtype("context", ctypes.POINTER(_IrqContextType)),
+                    NamedArgtype("context", _IrqContextType),
                     NamedArgtype("irqs", ctypes.c_uint32),
                     NamedArgtype("timeout ms", ctypes.c_uint32),
                     NamedArgtype("irqs asserted", ctypes.POINTER(ctypes.c_uint32)),
