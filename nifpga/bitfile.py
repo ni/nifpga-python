@@ -596,6 +596,7 @@ class Register(object):
             </Register>
         """
         self._name = reg_xml.find("Name").text
+        self._indicator = reg_xml.find("Indicator").text
         self._offset = int(reg_xml.find("Offset").text)
         self._access_may_timeout = True if reg_xml.find("AccessMayTimeout").text.lower() == 'true' else False
         self._internal = True if reg_xml.find("Internal").text.lower() == 'true' else False
