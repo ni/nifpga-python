@@ -596,8 +596,8 @@ class Register(object):
             </Register>
         """
         self._name = reg_xml.find("Name").text
-        self._indicator = reg_xml.find("Indicator").text.lower() == "true"
         self._offset = int(reg_xml.find("Offset").text)
+        self._indicator = True if reg_xml.find("Indicator").text.lower() == "true" else False
         self._access_may_timeout = True if reg_xml.find("AccessMayTimeout").text.lower() == 'true' else False
         self._internal = True if reg_xml.find("Internal").text.lower() == 'true' else False
         datatype = reg_xml.find("Datatype")
@@ -630,6 +630,11 @@ class Register(object):
         return isinstance(self._type, _Array)
 
     @property
+    def is_indicator(self):
+        """ Returns whether or not this Register is an Indicator """
+        return self._indicator
+
+    @property
     def offset(self):
         """ Returns the offset of this register from the base address. """
         return self._offset
@@ -640,6 +645,7 @@ class Register(object):
         """
         return self._access_may_timeout
 
+    @property
     def is_internal(self):
         """ Returns whether or not this register is for internal use. """
         return self._internal
