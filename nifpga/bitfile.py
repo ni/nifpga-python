@@ -597,6 +597,7 @@ class Register(object):
         """
         self._name = reg_xml.find("Name").text
         self._offset = int(reg_xml.find("Offset").text)
+        self._indicator = True if reg_xml.find("Indicator").text.lower() == "true" else False
         self._access_may_timeout = True if reg_xml.find("AccessMayTimeout").text.lower() == 'true' else False
         self._internal = True if reg_xml.find("Internal").text.lower() == 'true' else False
         datatype = reg_xml.find("Datatype")
@@ -627,6 +628,11 @@ class Register(object):
     def is_array(self):
         """ Returns whether or not this Register is an array """
         return isinstance(self._type, _Array)
+
+    @property
+    def is_indicator(self):
+        """ Returns whether or not this Register is an Indicator """
+        return self._indicator
 
     @property
     def offset(self):
