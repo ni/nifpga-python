@@ -20,7 +20,7 @@ upgrade the appropriate RIO device driver for your hardware.
 
 **nifpga** supports Windows and Linux operating systems.
 
-**nifpga** supports Python  2.7, 3.4+ . **nifpga** will likely work on other Python implementations.  Feel free to open a issue on github for supporting a new implementation.
+**nifpga** supports Python  3.5+ . **nifpga** will likely work on other Python implementations.  Feel free to open a issue on github for supporting a new implementation.
 
 Bugs / Feature Requests
 =======================

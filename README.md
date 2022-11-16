@@ -20,7 +20,7 @@ Or by installing from PyPI using:
 
     pip install nifpga
     
-nifpga supports Python 2.7 and 3.4+.  Note, Python 2.7 support will be dropped in the next non-maintenance release.
+nifpga supports Python 3.5+.
 
 Examples
 --------
