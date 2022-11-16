@@ -645,7 +645,6 @@ class Register(object):
         """
         return self._access_may_timeout
 
-    @property
     def is_internal(self):
         """ Returns whether or not this register is for internal use. """
         return self._internal
