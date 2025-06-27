@@ -15,7 +15,6 @@ from collections import namedtuple
 import ctypes
 from builtins import bytes
 from math import ceil
-from future.utils import iteritems
 import locale
 try:
     # Python 2
@@ -125,7 +124,7 @@ class Session(object):
         self._registers = {}
         self._internal_registers_dict = {}
         base_address_on_device = bitfile.base_address_on_device()
-        for name, bitfile_register in iteritems(bitfile.registers):
+        for name, bitfile_register in bitfile.registers.items():
             assert name not in self._registers, \
                 "One or more registers have the same name '%s', this is not supported" % name
             register = self._create_register(bitfile_register,
@@ -136,7 +135,7 @@ class Session(object):
                 self._registers[name] = register
 
         self._fifos = {}
-        for name, bitfile_fifo in iteritems(bitfile.fifos):
+        for name, bitfile_fifo in bitfile.fifos.items():
             assert name not in self._fifos, \
                 "One or more FIFOs have the same name '%s', this is not supported" % name
             self._fifos[name] = self._create_fifo(bitfile_fifo)
