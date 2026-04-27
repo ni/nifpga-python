@@ -2,8 +2,8 @@
 <Bitfile>
 	<BitfileVersion>4.0</BitfileVersion>
 	<Documentation>
-		  <BuildSpecVersion/>
-		  <BuildSpecDescription/>
+		  <BuildSpecVersion>1.0.0</BuildSpecVersion>
+		  <BuildSpecDescription>Test Bitfile Description</BuildSpecDescription>
 	</Documentation>
 	<SignatureRegister>11D7986409F418C50DCF65F91C759A9D</SignatureRegister>
 	<SignatureGuids>57582923F80D3869DB116511EF8DBC8C</SignatureGuids>
