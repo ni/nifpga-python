@@ -28,9 +28,9 @@ class Bitfile(object):
         documentation = tree.find("Documentation")
         if documentation is not None:
             build_spec_version_xml = documentation.find("BuildSpecVersion")
-            self._build_spec_version = build_spec_version_xml.text if build_spec_version_xml is not None else None
+            self._build_spec_version = build_spec_version_xml.text if build_spec_version_xml is not None and build_spec_version_xml.text else None
             build_spec_description_xml = documentation.find("BuildSpecDescription")
-            self._build_spec_description = build_spec_description_xml.text if build_spec_description_xml is not None else None
+            self._build_spec_description = build_spec_description_xml.text if build_spec_description_xml is not None and build_spec_description_xml.text else None
         else:
             self._build_spec_version = None
             self._build_spec_description = None
