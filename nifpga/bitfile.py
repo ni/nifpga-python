@@ -25,6 +25,16 @@ class Bitfile(object):
 
         self._signature = tree.find("SignatureRegister").text.upper()
 
+        documentation = tree.find("Documentation")
+        if documentation is not None:
+            build_spec_version_xml = documentation.find("BuildSpecVersion")
+            self._build_spec_version = build_spec_version_xml.text if build_spec_version_xml is not None else None
+            build_spec_description_xml = documentation.find("BuildSpecDescription")
+            self._build_spec_description = build_spec_description_xml.text if build_spec_description_xml is not None else None
+        else:
+            self._build_spec_version = None
+            self._build_spec_description = None
+
         project = tree.find("Project")
         nifpga = project.find("CompilationResultsTree") \
                         .find("CompilationResults") \
@@ -61,6 +71,20 @@ class Bitfile(object):
     def signature(self):
         """ Returns the signature of the bitfile. """
         return self._signature
+
+    @property
+    def build_spec_version(self):
+        """ Returns the build spec version from the bitfile Documentation, or
+        None if not present or empty.
+        """
+        return self._build_spec_version
+
+    @property
+    def build_spec_description(self):
+        """ Returns the build spec description from the bitfile Documentation,
+        or None if not present or empty.
+        """
+        return self._build_spec_description
 
     @property
     def registers(self):
