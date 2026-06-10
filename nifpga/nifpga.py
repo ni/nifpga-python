@@ -296,7 +296,7 @@ class _NiFpga(StatusCheckedLibrary):
                 ]),
             LibraryFunctionInfo(
                 pretty_name="AddFifo",
-                name_in_library="NiFpgaDll_ConfigureFifo",
+                name_in_library="NiFpgaDll_AddFifo",
                 named_argtypes=[
                     NamedArgtype("session", _SessionType),
                     NamedArgtype("fifo", ctypes.c_uint32),
