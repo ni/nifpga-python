@@ -123,7 +123,8 @@ class Session(object):
         self._reset_if_last_session_on_exit = reset_if_last_session_on_exit
         self._registers = {}
         self._internal_registers_dict = {}
-        base_address_on_device = bitfile.base_address_on_device()
+        self._base_address_on_device = bitfile.base_address_on_device()
+        base_address_on_device = self._base_address_on_device
         for name, bitfile_register in bitfile.registers.items():
             assert name not in self._registers, \
                 "One or more registers have the same name '%s', this is not supported" % name
@@ -307,6 +308,54 @@ class Session(object):
             return _DataConvertingFifo(self._session, self._nifpga, bitfile_fifo)
         else:
             return _FIFO(self._session, self._nifpga, bitfile_fifo)
+
+    def add_register(self, name, offset):
+        """ Creates a new U32 register and adds it to the session.
+
+        This is useful for HDL-written registers that do not appear in the
+        bitfile and must be added manually.
+
+        Args:
+            name (str): The name to assign to the register.
+            offset (int): The offset of the register from the base address on
+                the device.
+
+        Returns:
+            register (_Register): The newly created register object.
+        """
+        assert name not in self._registers, \
+            "A register with the name '%s' already exists" % name
+        descriptor = _RegisterDescriptor(name, offset)
+        register = self._create_register(descriptor, self._base_address_on_device)
+        self._registers[name] = register
+        return register
+
+    def add_fifo(self, name, number, base_address, direction):
+        """ Creates a new U32 FIFO and adds it to the session.
+
+        This is useful for HDL-written FIFOs that do not appear in the bitfile
+        and must be added manually.  Calls the underlying NiFpgaDll_AddFifo
+        function in the driver before constructing the Python FIFO object.
+
+        Args:
+            name (str): The name to assign to the FIFO.
+            number (int): The FIFO number used as its unique identifier.
+            base_address (int): The base address of the FIFO on the device.
+            direction (int): The direction of the FIFO
+                (e.g. 0 for host-to-target, 1 for target-to-host).
+
+        Returns:
+            fifo (_FIFO): The newly created FIFO object.
+        """
+        assert name not in self._fifos, \
+            "A FIFO with the name '%s' already exists" % name
+        bytes_per_element = ctypes.sizeof(DataType.U32._return_ctype())
+        self._nifpga.AddFifo(self._session, number, base_address, direction,
+                             bytes_per_element)
+        descriptor = _FifoDescriptor(name, number)
+        fifo = self._create_fifo(descriptor)
+        self._fifos[name] = fifo
+        return fifo
 
 
 class _Register(object):
@@ -1284,3 +1333,97 @@ class _FIFODataRegion(object):
             self._accessor = None
             self._fifo.release_region(self)
             self._released = True
+
+
+class _RegisterDescriptor(object):
+    """ Lightweight descriptor for a U32 register not defined in the bitfile.
+
+    Used by Session.add_register to create a register object that mimics the
+    interface expected by _Register from a bitfile.Register.
+    """
+
+    class _U32Type(object):
+        """ Minimal type descriptor for a U32 register. """
+        is_c_api_type = True
+        datatype = DataType.U32
+
+    _type_instance = None
+
+    def __init__(self, name, offset):
+        self._name = name
+        self._offset = offset
+        if _RegisterDescriptor._type_instance is None:
+            _RegisterDescriptor._type_instance = _RegisterDescriptor._U32Type()
+        self._type = _RegisterDescriptor._type_instance
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def datatype(self):
+        return DataType.U32
+
+    @property
+    def type(self):
+        return self._type
+
+    @property
+    def offset(self):
+        return self._offset
+
+    def access_may_timeout(self):
+        return False
+
+    def is_array(self):
+        return False
+
+    def is_internal(self):
+        return False
+
+
+class _FifoDescriptor(object):
+    """ Lightweight descriptor for a U32 FIFO not defined in the bitfile.
+
+    Used by Session.add_fifo to create a FIFO object that mimics the interface
+    expected by _FIFO from a bitfile.Fifo.
+    """
+
+    class _U32Type(object):
+        """ Minimal type descriptor for a U32 FIFO. """
+        datatype = DataType.U32
+
+    _type_instance = None
+
+    def __init__(self, name, number):
+        self._name = name
+        self._number = number
+        if _FifoDescriptor._type_instance is None:
+            _FifoDescriptor._type_instance = _FifoDescriptor._U32Type()
+        self._type = _FifoDescriptor._type_instance
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def number(self):
+        return self._number
+
+    @property
+    def datatype(self):
+        return DataType.U32
+
+    @property
+    def type(self):
+        return self._type
+
+    @property
+    def transfer_size_bytes(self):
+        return ctypes.sizeof(DataType.U32._return_ctype())
+
+    def is_fxp(self):
+        return False
+
+    def is_composite(self):
+        return False
