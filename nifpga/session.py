@@ -309,8 +309,8 @@ class Session(object):
         else:
             return _FIFO(self._session, self._nifpga, bitfile_fifo)
 
-    def add_register(self, name, offset):
-        """ Creates a new U32 register and adds it to the session.
+    def add_register(self, name, offset, datatype=DataType.U32):
+        """ Creates a register and adds it to the session.
 
         This is useful for HDL-written registers that do not appear in the
         bitfile and must be added manually.
@@ -319,19 +319,25 @@ class Session(object):
             name (str): The name to assign to the register.
             offset (int): The offset of the register from the base address on
                 the device.
+            datatype (DataType): The DataType of the register. Defaults to
+                DataType.U32.
 
         Returns:
             register (_Register): The newly created register object.
         """
+        assert isinstance(datatype, DataType), \
+            "datatype must be a DataType instance"
         assert name not in self._registers, \
             "A register with the name '%s' already exists" % name
-        descriptor = _RegisterDescriptor(name, offset)
-        register = self._create_register(descriptor, self._base_address_on_device)
+        resource = offset + self._base_address_on_device
+        register = _Register.from_params(self._session, self._nifpga, name,
+                                         resource, datatype)
         self._registers[name] = register
         return register
 
-    def add_fifo(self, name, number, base_address, direction):
-        """ Creates a new U32 FIFO and adds it to the session.
+    def add_fifo(self, name, number, base_address, direction,
+                 datatype=DataType.U32):
+        """ Creates a FIFO and adds it to the session.
 
         This is useful for HDL-written FIFOs that do not appear in the bitfile
         and must be added manually.  Calls the underlying NiFpgaDll_AddFifo
@@ -343,19 +349,34 @@ class Session(object):
             base_address (int): The base address of the FIFO on the device.
             direction (int): The direction of the FIFO
                 (e.g. 0 for host-to-target, 1 for target-to-host).
+            datatype (DataType): The DataType of the FIFO elements. Defaults to
+                DataType.U32.
 
         Returns:
             fifo (_FIFO): The newly created FIFO object.
         """
+        assert isinstance(datatype, DataType), \
+            "datatype must be a DataType instance"
         assert name not in self._fifos, \
             "A FIFO with the name '%s' already exists" % name
-        bytes_per_element = ctypes.sizeof(DataType.U32._return_ctype())
+        bytes_per_element = ctypes.sizeof(datatype._return_ctype())
         self._nifpga.AddFifo(self._session, number, base_address, direction,
                              bytes_per_element)
-        descriptor = _FifoDescriptor(name, number)
-        fifo = self._create_fifo(descriptor)
+        fifo = _FIFO.from_params(self._session, self._nifpga, name, number,
+                                 datatype)
         self._fifos[name] = fifo
         return fifo
+
+
+class _SimpleDataType(object):
+    """Minimal type descriptor wrapping a DataType enum value.
+
+    Used by _Register.from_params and _FIFO.from_params so that code paths
+    that inspect ``_type.datatype`` (e.g. _FIFODataAccessor) work correctly
+    without requiring a full bitfile type object.
+    """
+    def __init__(self, datatype):
+        self.datatype = datatype
 
 
 class _Register(object):
@@ -391,6 +412,20 @@ class _Register(object):
         self._resource = bitfile_register.offset + base_address_on_device
         if bitfile_register.access_may_timeout():
             self._resource = self._resource | 0x80000000
+
+    @classmethod
+    def from_params(cls, session, nifpga, name, resource, datatype):
+        """Create a _Register directly from parameters, bypassing a bitfile object."""
+        instance = cls.__new__(cls)
+        instance._name = name
+        instance._session = session
+        instance._datatype = datatype
+        instance._read_func = nifpga["Read%s" % datatype]
+        instance._write_func = nifpga["Write%s" % datatype]
+        instance._ctype_type = datatype._return_ctype()
+        instance._resource = resource
+        instance._type = None
+        return instance
 
     def __len__(self):
         """ A single register will always have one and only one element.
@@ -612,6 +647,25 @@ class _FIFO(object):
         self._ctype_type = self._datatype._return_ctype()
         self._name = bitfile_fifo.name
         self._type = bitfile_fifo.type
+
+    @classmethod
+    def from_params(cls, session, nifpga, name, number, datatype):
+        """Create a _FIFO directly from parameters, bypassing a bitfile object."""
+        instance = cls.__new__(cls)
+        instance._name = name
+        instance._session = session
+        instance._datatype = datatype
+        instance._number = number
+        instance._transfer_size_bytes = ctypes.sizeof(datatype._return_ctype())
+        instance._write_func = nifpga["WriteFifo%s" % datatype]
+        instance._read_func = nifpga["ReadFifo%s" % datatype]
+        instance._acquire_read_func = nifpga["AcquireFifoReadElements%s" % datatype]
+        instance._acquire_write_func = nifpga["AcquireFifoWriteElements%s" % datatype]
+        instance._release_elements_func = nifpga["ReleaseFifoElements"]
+        instance._nifpga = nifpga
+        instance._ctype_type = datatype._return_ctype()
+        instance._type = _SimpleDataType(datatype)
+        return instance
 
     def configure(self, requested_depth):
         """ Specifies the depth of the host memory part of the DMA FIFO.
@@ -1333,97 +1387,3 @@ class _FIFODataRegion(object):
             self._accessor = None
             self._fifo.release_region(self)
             self._released = True
-
-
-class _RegisterDescriptor(object):
-    """ Lightweight descriptor for a U32 register not defined in the bitfile.
-
-    Used by Session.add_register to create a register object that mimics the
-    interface expected by _Register from a bitfile.Register.
-    """
-
-    class _U32Type(object):
-        """ Minimal type descriptor for a U32 register. """
-        is_c_api_type = True
-        datatype = DataType.U32
-
-    _type_instance = None
-
-    def __init__(self, name, offset):
-        self._name = name
-        self._offset = offset
-        if _RegisterDescriptor._type_instance is None:
-            _RegisterDescriptor._type_instance = _RegisterDescriptor._U32Type()
-        self._type = _RegisterDescriptor._type_instance
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def datatype(self):
-        return DataType.U32
-
-    @property
-    def type(self):
-        return self._type
-
-    @property
-    def offset(self):
-        return self._offset
-
-    def access_may_timeout(self):
-        return False
-
-    def is_array(self):
-        return False
-
-    def is_internal(self):
-        return False
-
-
-class _FifoDescriptor(object):
-    """ Lightweight descriptor for a U32 FIFO not defined in the bitfile.
-
-    Used by Session.add_fifo to create a FIFO object that mimics the interface
-    expected by _FIFO from a bitfile.Fifo.
-    """
-
-    class _U32Type(object):
-        """ Minimal type descriptor for a U32 FIFO. """
-        datatype = DataType.U32
-
-    _type_instance = None
-
-    def __init__(self, name, number):
-        self._name = name
-        self._number = number
-        if _FifoDescriptor._type_instance is None:
-            _FifoDescriptor._type_instance = _FifoDescriptor._U32Type()
-        self._type = _FifoDescriptor._type_instance
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def number(self):
-        return self._number
-
-    @property
-    def datatype(self):
-        return DataType.U32
-
-    @property
-    def type(self):
-        return self._type
-
-    @property
-    def transfer_size_bytes(self):
-        return ctypes.sizeof(DataType.U32._return_ctype())
-
-    def is_fxp(self):
-        return False
-
-    def is_composite(self):
-        return False

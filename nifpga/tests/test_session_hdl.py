@@ -8,7 +8,7 @@ import mock
 
 import nifpga
 from nifpga.nifpga import DataType, _SessionType
-from nifpga.session import Session, _RegisterDescriptor, _FifoDescriptor
+from nifpga.session import Session
 from nifpga.statuscheckedlibrary import StatusCheckedLibrary
 
 
@@ -59,70 +59,6 @@ def _make_mock_session():
     return session
 
 
-class RegisterDescriptorTest(unittest.TestCase):
-    def test_name(self):
-        d = _RegisterDescriptor("MyReg", 100)
-        self.assertEqual(d.name, "MyReg")
-
-    def test_offset(self):
-        d = _RegisterDescriptor("MyReg", 100)
-        self.assertEqual(d.offset, 100)
-
-    def test_datatype_is_u32(self):
-        d = _RegisterDescriptor("MyReg", 100)
-        self.assertIs(d.datatype, DataType.U32)
-
-    def test_type_is_c_api_type(self):
-        d = _RegisterDescriptor("MyReg", 100)
-        self.assertTrue(d.type.is_c_api_type)
-
-    def test_type_datatype_is_u32(self):
-        d = _RegisterDescriptor("MyReg", 100)
-        self.assertIs(d.type.datatype, DataType.U32)
-
-    def test_access_may_timeout_false(self):
-        d = _RegisterDescriptor("MyReg", 100)
-        self.assertFalse(d.access_may_timeout())
-
-    def test_is_array_false(self):
-        d = _RegisterDescriptor("MyReg", 100)
-        self.assertFalse(d.is_array())
-
-    def test_is_internal_false(self):
-        d = _RegisterDescriptor("MyReg", 100)
-        self.assertFalse(d.is_internal())
-
-
-class FifoDescriptorTest(unittest.TestCase):
-    def test_name(self):
-        d = _FifoDescriptor("MyFifo", 3)
-        self.assertEqual(d.name, "MyFifo")
-
-    def test_number(self):
-        d = _FifoDescriptor("MyFifo", 3)
-        self.assertEqual(d.number, 3)
-
-    def test_datatype_is_u32(self):
-        d = _FifoDescriptor("MyFifo", 3)
-        self.assertIs(d.datatype, DataType.U32)
-
-    def test_type_datatype_is_u32(self):
-        d = _FifoDescriptor("MyFifo", 3)
-        self.assertIs(d.type.datatype, DataType.U32)
-
-    def test_transfer_size_bytes_is_4(self):
-        d = _FifoDescriptor("MyFifo", 3)
-        self.assertEqual(d.transfer_size_bytes, 4)
-
-    def test_is_fxp_false(self):
-        d = _FifoDescriptor("MyFifo", 3)
-        self.assertFalse(d.is_fxp())
-
-    def test_is_composite_false(self):
-        d = _FifoDescriptor("MyFifo", 3)
-        self.assertFalse(d.is_composite())
-
-
 class AddRegisterTest(unittest.TestCase):
     def setUp(self):
         self._session = _make_mock_session()
@@ -139,9 +75,17 @@ class AddRegisterTest(unittest.TestCase):
         reg = self._session.add_register("HdlReg", 8)
         self.assertEqual(reg.name, "HdlReg")
 
-    def test_register_datatype_is_u32(self):
+    def test_register_datatype_defaults_to_u32(self):
         reg = self._session.add_register("HdlReg", 8)
         self.assertIs(reg.datatype, DataType.U32)
+
+    def test_register_custom_datatype(self):
+        reg = self._session.add_register("HdlReg", 8, datatype=DataType.I16)
+        self.assertIs(reg.datatype, DataType.I16)
+
+    def test_register_invalid_datatype_raises(self):
+        with self.assertRaises(AssertionError):
+            self._session.add_register("HdlReg", 8, datatype="U32")
 
     def test_register_resource_includes_base_address(self):
         base = self._session._base_address_on_device  # 16384
@@ -165,6 +109,13 @@ class AddFifoTest(unittest.TestCase):
         self._session._nifpga.AddFifo.assert_called_once_with(
             self._session._session, 5, 0x8000, 0, 4)
 
+    def test_add_fifo_calls_nifpga_AddFifo_with_custom_datatype(self):
+        self._session.add_fifo("HdlFifo", number=5, base_address=0x8000,
+                               direction=0, datatype=DataType.U64)
+        self._session._nifpga.AddFifo.assert_called_once_with(
+            self._session._session, 5, 0x8000, 0,
+            ctypes.sizeof(DataType.U64._return_ctype()))
+
     def test_add_fifo_returns_fifo(self):
         fifo = self._session.add_fifo("HdlFifo", number=5,
                                       base_address=0x8000, direction=0)
@@ -180,10 +131,21 @@ class AddFifoTest(unittest.TestCase):
                                       base_address=0x8000, direction=0)
         self.assertEqual(fifo.name, "HdlFifo")
 
-    def test_fifo_datatype_is_u32(self):
+    def test_fifo_datatype_defaults_to_u32(self):
         fifo = self._session.add_fifo("HdlFifo", number=5,
                                       base_address=0x8000, direction=0)
         self.assertIs(fifo.datatype, DataType.U32)
+
+    def test_fifo_custom_datatype(self):
+        fifo = self._session.add_fifo("HdlFifo", number=5,
+                                      base_address=0x8000, direction=0,
+                                      datatype=DataType.I32)
+        self.assertIs(fifo.datatype, DataType.I32)
+
+    def test_fifo_invalid_datatype_raises(self):
+        with self.assertRaises(AssertionError):
+            self._session.add_fifo("HdlFifo", number=5, base_address=0x8000,
+                                   direction=0, datatype=7)
 
     def test_fifo_number(self):
         fifo = self._session.add_fifo("HdlFifo", number=7,
