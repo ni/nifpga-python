@@ -295,6 +295,16 @@ class _NiFpga(StatusCheckedLibrary):
                     NamedArgtype("irqs", ctypes.c_uint32),
                 ]),
             LibraryFunctionInfo(
+                pretty_name="AddFifo",
+                name_in_library="NiFpgaDll_AddFifo",
+                named_argtypes=[
+                    NamedArgtype("session", _SessionType),
+                    NamedArgtype("fifo", ctypes.c_uint32),
+                    NamedArgtype("baseAddress", ctypes.c_uint32),
+                    NamedArgtype("direction", ctypes.c_uint32),
+                    NamedArgtype("bytesPerElement", ctypes.c_uint32),
+                ]),
+            LibraryFunctionInfo(
                 pretty_name="ConfigureFifo",
                 name_in_library="NiFpgaDll_ConfigureFifo",
                 named_argtypes=[
