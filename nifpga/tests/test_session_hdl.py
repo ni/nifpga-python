@@ -141,6 +141,12 @@ class AddFifoTest(unittest.TestCase):
                                       datatype=DataType.I32)
         self.assertIs(fifo.datatype, DataType.I32)
 
+    def test_fifo_type_descriptor_uses_manual_datatype(self):
+        fifo = self._session.add_fifo("HdlFifo", number=5,
+                                      base_address=0x8000, direction=0,
+                                      datatype=DataType.I32)
+        self.assertIs(fifo._type.datatype, DataType.I32)
+
     def test_fifo_invalid_datatype_raises(self):
         with self.assertRaises(AssertionError):
             self._session.add_fifo("HdlFifo", number=5, base_address=0x8000,
