@@ -330,8 +330,11 @@ class Session(object):
         assert name not in self._registers, \
             "A register with the name '%s' already exists" % name
         resource = offset + self._base_address_on_device
-        register = _Register.from_params(self._session, self._nifpga, name,
-                                         resource, datatype)
+        register = _Register(self._session, self._nifpga,
+                             bitfile_register=None,
+                             name=name,
+                             resource=resource,
+                             datatype=datatype)
         self._registers[name] = register
         return register
 
@@ -362,19 +365,17 @@ class Session(object):
         bytes_per_element = ctypes.sizeof(datatype._return_ctype())
         self._nifpga.AddFifo(self._session, number, base_address, direction,
                              bytes_per_element)
-        fifo = _FIFO.from_params(self._session, self._nifpga, name, number,
-                                 datatype)
+        fifo = _FIFO(self._session, self._nifpga,
+                     bitfile_fifo=None,
+                     name=name,
+                     number=number,
+                     datatype=datatype)
         self._fifos[name] = fifo
         return fifo
 
 
 class _SimpleDataType(object):
-    """Minimal type descriptor wrapping a DataType enum value.
-
-    Used by _Register.from_params and _FIFO.from_params so that code paths
-    that inspect ``_type.datatype`` (e.g. _FIFODataAccessor) work correctly
-    without requiring a full bitfile type object.
-    """
+    """Minimal type descriptor wrapping a DataType enum value."""
     def __init__(self, datatype):
         self.datatype = datatype
 
@@ -392,13 +393,25 @@ class _Register(object):
     def __init__(self,
                  session,
                  nifpga,
-                 bitfile_register,
-                 base_address_on_device,
+                 bitfile_register=None,
+                 base_address_on_device=0,
+                 name=None,
+                 resource=None,
+                 datatype=None,
                  read_func=None,
                  write_func=None):
-        self._datatype = bitfile_register.datatype
-        self._name = bitfile_register.name
         self._session = session
+        self._datatype = datatype
+        self._name = name
+        self._type = None
+        self._resource = resource
+        if bitfile_register is not None:
+            self._datatype = bitfile_register.datatype
+            self._name = bitfile_register.name
+            self._type = bitfile_register.type
+            self._resource = bitfile_register.offset + base_address_on_device
+            if bitfile_register.access_may_timeout():
+                self._resource = self._resource | 0x80000000
         if read_func is None:
             self._read_func = nifpga["Read%s" % self.datatype]
         else:
@@ -408,24 +421,6 @@ class _Register(object):
         else:
             self._write_func = write_func
         self._ctype_type = self._datatype._return_ctype()
-        self._type = bitfile_register.type
-        self._resource = bitfile_register.offset + base_address_on_device
-        if bitfile_register.access_may_timeout():
-            self._resource = self._resource | 0x80000000
-
-    @classmethod
-    def from_params(cls, session, nifpga, name, resource, datatype):
-        """Create a _Register directly from parameters, bypassing a bitfile object."""
-        instance = cls.__new__(cls)
-        instance._name = name
-        instance._session = session
-        instance._datatype = datatype
-        instance._read_func = nifpga["Read%s" % datatype]
-        instance._write_func = nifpga["Write%s" % datatype]
-        instance._ctype_type = datatype._return_ctype()
-        instance._resource = resource
-        instance._type = None
-        return instance
 
     def __len__(self):
         """ A single register will always have one and only one element.
@@ -630,14 +625,29 @@ class _FIFO(object):
     def __init__(self,
                  session,
                  nifpga,
-                 bitfile_fifo,
-                 datatype=None):
+                 bitfile_fifo=None,
+                 datatype=None,
+                 name=None,
+                 number=None,
+                 transfer_size_bytes=None,
+                 type_descriptor=None):
         self._datatype = datatype
         if self._datatype is None:
             self._datatype = bitfile_fifo.datatype
-        self._number = bitfile_fifo.number
+        self._number = number
         self._session = session
-        self._transfer_size_bytes = bitfile_fifo.transfer_size_bytes
+        self._transfer_size_bytes = transfer_size_bytes
+        self._name = name
+        self._type = type_descriptor
+        if bitfile_fifo is not None:
+            self._number = bitfile_fifo.number
+            self._transfer_size_bytes = bitfile_fifo.transfer_size_bytes
+            self._name = bitfile_fifo.name
+            self._type = bitfile_fifo.type
+        if self._transfer_size_bytes is None:
+            self._transfer_size_bytes = ctypes.sizeof(self._datatype._return_ctype())
+        if self._type is None:
+            self._type = _SimpleDataType(self._datatype)
         self._write_func = nifpga["WriteFifo%s" % self._datatype]
         self._read_func = nifpga["ReadFifo%s" % self._datatype]
         self._acquire_read_func = nifpga["AcquireFifoReadElements%s" % self._datatype]
@@ -645,27 +655,6 @@ class _FIFO(object):
         self._release_elements_func = nifpga["ReleaseFifoElements"]
         self._nifpga = nifpga
         self._ctype_type = self._datatype._return_ctype()
-        self._name = bitfile_fifo.name
-        self._type = bitfile_fifo.type
-
-    @classmethod
-    def from_params(cls, session, nifpga, name, number, datatype):
-        """Create a _FIFO directly from parameters, bypassing a bitfile object."""
-        instance = cls.__new__(cls)
-        instance._name = name
-        instance._session = session
-        instance._datatype = datatype
-        instance._number = number
-        instance._transfer_size_bytes = ctypes.sizeof(datatype._return_ctype())
-        instance._write_func = nifpga["WriteFifo%s" % datatype]
-        instance._read_func = nifpga["ReadFifo%s" % datatype]
-        instance._acquire_read_func = nifpga["AcquireFifoReadElements%s" % datatype]
-        instance._acquire_write_func = nifpga["AcquireFifoWriteElements%s" % datatype]
-        instance._release_elements_func = nifpga["ReleaseFifoElements"]
-        instance._nifpga = nifpga
-        instance._ctype_type = datatype._return_ctype()
-        instance._type = _SimpleDataType(datatype)
-        return instance
 
     def configure(self, requested_depth):
         """ Specifies the depth of the host memory part of the DMA FIFO.

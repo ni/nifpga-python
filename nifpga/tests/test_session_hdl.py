@@ -9,7 +9,6 @@ import mock
 import nifpga
 from nifpga.nifpga import DataType, _SessionType
 from nifpga.session import Session
-from nifpga.statuscheckedlibrary import StatusCheckedLibrary
 
 
 MINIMAL_BITFILE_XML = """<?xml version="1.0" encoding="UTF-8"?>
